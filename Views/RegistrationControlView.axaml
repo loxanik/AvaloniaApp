@@ -1,0 +1,183 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Shop.ViewModels"
+             xmlns:i="using:Avalonia.Xaml.Interactivity"
+             xmlns:ei="using:Avalonia.Xaml.Interactions.Core"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="Shop.Views.RegistrationControlView"
+             x:DataType="vm:RegistrationControlViewModel">
+    
+    <Grid>
+        
+        <Border Background="AliceBlue"
+                BorderThickness="1"
+                BorderBrush="Black"
+                MinWidth="500"
+                MinHeight="420"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                CornerRadius="20"
+                Padding="10">
+            
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                
+                    
+                    <TextBlock HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               Text="Регистрация" 
+                               FontSize="30"
+                               FontWeight="Bold"
+                               Grid.ColumnSpan="2"/>
+                    
+                    <StackPanel Grid.Row="1"
+                                HorizontalAlignment="Left"
+                                Margin="10">
+                        
+                        <TextBlock Text="Логин"
+                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="Left"/>
+                        <TextBox Width="200"
+                                 Watermark="Введите логин"
+                                 Text="{Binding Login, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        
+                    </StackPanel>
+                    
+                    <StackPanel Grid.Row="2" 
+                                HorizontalAlignment="Left"
+                                Margin="10">
+                        
+                        <TextBlock Text="Пароль"
+                                   VerticalAlignment="Center"/>
+                        <TextBox Width="200"
+                                 Watermark="Введите пароль"
+                                 PasswordChar="*"
+                                 Text="{Binding Password, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+
+                    </StackPanel>
+                    
+                    <StackPanel Grid.Row="3"
+                                HorizontalAlignment="Left"
+                                Margin="10">
+                        
+                        <TextBlock Text="Подтвердите пароль"
+                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="Left"/>
+                        <TextBox Width="200"
+                                 Watermark="Подтвердите пароль"
+                                 Text="{Binding ConfirmPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                 PasswordChar="*"/>
+                        
+                    </StackPanel>
+                    
+                    <StackPanel Grid.Row="4"
+                                HorizontalAlignment="Left"
+                                Margin="10">
+                        
+                        <TextBlock Text="Почта"
+                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="Left"/>
+                        <TextBox Width="200"
+                                 Watermark="Введите почту"
+                                 Text="{Binding Email, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        
+                    </StackPanel>
+                    
+                    <StackPanel Grid.Row="1" Grid.Column="1"
+                                HorizontalAlignment="Left"
+                                Margin="10">
+                        
+                        <TextBlock Text="Имя"
+                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="Left"/>
+                        <TextBox Width="200"
+                                 Watermark="Введите имя"
+                                 Text="{Binding FirstName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        
+                    </StackPanel>
+                    
+                    <StackPanel Grid.Row="2" Grid.Column="1"
+                                HorizontalAlignment="Left"
+                                Margin="10">
+                        
+                        <TextBlock Text="Фамилия"
+                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="Left"/>
+                        <TextBox Width="200"
+                                 Watermark="Введите фамилию"
+                                 Text="{Binding LastName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        
+                    </StackPanel>
+                    
+                    <StackPanel Grid.Row="3" Grid.Column="1"
+                                HorizontalAlignment="Left"
+                                Margin="10">
+                        
+                        <TextBlock Text="Отчество"
+                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="Left"/>
+                        <TextBox Width="200"
+                                 Watermark="Можете ввести отчество"
+                                 Text="{Binding Patronymic, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        
+                    </StackPanel>
+                    
+                    <StackPanel Grid.Row="4" Grid.Column="1"
+                                HorizontalAlignment="Left"
+                                Margin="10">
+                        
+                        <TextBlock Text="Телефон"
+                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="Left"/>
+                        <TextBox Width="200"
+                                 Watermark="Введите номер телефона"
+                                 Text="{Binding PhoneNumber, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        
+                    </StackPanel>
+                    
+                    <StackPanel Grid.ColumnSpan="2" Grid.Row="5">
+                        <TextBlock Text="Войти"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   Margin="10"
+                                   TextDecorations="Underline"
+                                   Foreground="BlueViolet"
+                                   Cursor="Hand">
+                            <i:Interaction.Behaviors>
+                                <ei:EventTriggerBehavior EventName="Tapped">
+                                    <ei:InvokeCommandAction Command="{Binding ChangeToLoginCommand}" />
+                                </ei:EventTriggerBehavior>
+                            </i:Interaction.Behaviors>
+                        </TextBlock>
+                        
+                        <Button Content="{Binding RegisterButtonText}" 
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Margin="10"
+                                MinWidth="150"
+                                Command="{Binding RegisterCommand}"
+                                HorizontalContentAlignment="Center"
+                                />
+                    </StackPanel>
+                    
+            </Grid>
+            
+        </Border>
+        
+        
+    </Grid>
+    
+</UserControl>

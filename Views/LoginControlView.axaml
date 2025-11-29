@@ -1,0 +1,101 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Shop.ViewModels"
+             xmlns:i="using:Avalonia.Xaml.Interactivity"
+             xmlns:ei="using:Avalonia.Xaml.Interactions.Core"
+             mc:Ignorable="d" d:DesignWidth="1366" d:DesignHeight="768"
+             x:Class="Shop.Views.LoginControlView"
+             x:DataType="vm:LoginControlViewModel">
+    
+    <Grid>      
+        
+        <Border Background="AliceBlue"
+                BorderThickness="1"
+                BorderBrush="Black"
+                VerticalAlignment="Center"
+                HorizontalAlignment="Center"
+                MinWidth="450"
+                MinHeight="270"
+                CornerRadius="20"
+                Padding="10">
+            
+            <Grid>
+                
+                <StackPanel>
+                    
+                    <TextBlock HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               Text="Авторизация" 
+                               FontSize="30"
+                               FontWeight="Bold" />
+                    
+                    <StackPanel Orientation="Horizontal" 
+                                HorizontalAlignment="Center"
+                                Margin="0 10 50 0">
+                        
+                        <TextBlock Text="Логин"
+                                   VerticalAlignment="Center"
+                                   Margin="10 0"
+                                   MinWidth="50"/>
+                        <TextBox Width="200"
+                                 Watermark="Введите логин"
+                                 Text="{Binding Login}"/>
+                        
+                    </StackPanel>
+                    
+                    <StackPanel Orientation="Horizontal" 
+                                HorizontalAlignment="Center"
+                                Margin="0 10 50 0">
+                        
+                        <TextBlock Text="Пароль"
+                                   VerticalAlignment="Center"
+                                   Margin="10 0"
+                                   MinWidth="50"/>
+                        <TextBox Width="200"
+                                 Watermark="Введите пароль"
+                                 PasswordChar="*"
+                                 Text="{Binding Password}"/>
+                        
+                        
+                    </StackPanel>
+                    
+                    <StackPanel Orientation="Horizontal"
+                                Margin="0 10 50 0"
+                                HorizontalAlignment="Center">
+                        
+                       
+                    </StackPanel>
+                    
+                    <TextBlock Text="Зарегистроваться"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               Margin="10"
+                               TextDecorations="Underline"
+                               Foreground="BlueViolet"
+                               Cursor="Hand">
+                        <i:Interaction.Behaviors>
+                            <ei:EventTriggerBehavior EventName="Tapped">
+                                <ei:InvokeCommandAction Command="{Binding SwitchToRegisterCommand}"/>
+                            </ei:EventTriggerBehavior>
+                        </i:Interaction.Behaviors>
+                    </TextBlock>
+                    
+                    <Button Content="{Binding LoginButtonText}" 
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Margin="10"
+                            Width="150"
+                            HorizontalContentAlignment="Center"
+                            Command="{Binding LoginCommand}"/>
+                    
+                </StackPanel>
+                
+            </Grid>
+            
+        </Border>
+        
+    </Grid>
+    
+</UserControl>

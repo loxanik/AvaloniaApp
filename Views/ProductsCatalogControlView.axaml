@@ -1,0 +1,204 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             xmlns:vm="clr-namespace:Shop.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="Shop.Views.ProductsCatalogControlView"
+             x:DataType="vm:ProductsCatalogControlViewModel"
+             x:Name="RootControl">
+    
+    <Grid RowDefinitions="Auto,*,Auto">
+        
+        <Grid>
+            
+            <Border CornerRadius="20 0 0 20"
+                    Background="AliceBlue"
+                    Height="60"
+                    BorderBrush="Black"
+                    BorderThickness="1"
+                    Margin="5 0 0 0"
+                    Padding="10">
+                <Grid ColumnDefinitions="*,Auto">
+                    
+                    <TextBox Margin="0 0 10 0"
+                             Watermark="Поиск..."
+                             VerticalContentAlignment="Center"
+                             Height="30"
+                             CornerRadius="10"/>
+                    
+                    <StackPanel Grid.Column="1"
+                                Orientation="Horizontal"
+                                Spacing="10"
+                                VerticalAlignment="Center">
+                        
+                        <ComboBox CornerRadius="10"/>
+                        <TextBox CornerRadius="10"
+                                 Watermark="от"/>
+                        <TextBox CornerRadius="10"
+                                 Watermark="до"/>
+                        <ComboBox ItemsSource="{Binding Producers}"
+                                  SelectedItem="{Binding SelectedProducer}"
+                                  DisplayMemberBinding="{Binding Name}"
+                                  CornerRadius="10"/>
+                        <ComboBox ItemsSource="{Binding Categories}"
+                                  SelectedItem="{Binding SelectedCategory}"
+                                  DisplayMemberBinding="{Binding Name}"
+                                  CornerRadius="10"/>
+                        <Button Background="Transparent"
+                                Command="{Binding GetProductsCommand}"
+                                ToolTip.Tip="Обновить каталог"
+                                CornerRadius="10">
+                            <materialIcons:MaterialIcon Kind="Refresh"/>
+                        </Button>
+                        
+                        <Button Background="Transparent"
+                                Command="{Binding RemoveFiltersCommand}"
+                                ToolTip.Tip="Убрать фильтры"
+                                CornerRadius="10">
+                            <materialIcons:MaterialIcon Kind="FilterRemove"/>
+                        </Button>
+                        
+                    </StackPanel>
+                    
+                </Grid>
+                
+            </Border>
+            
+        </Grid>
+        
+        <Grid Grid.Row="1">
+            
+            <ScrollViewer HorizontalScrollBarVisibility="Hidden"
+                          VerticalScrollBarVisibility="Auto">
+                
+                <ItemsControl ItemsSource="{Binding Products}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="3" Rows="0" 
+                                         HorizontalAlignment="Center"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            
+                            <Border Background="LightGray"
+                                    Width="400"
+                                    Height="300"
+                                    Margin="10"
+                                    CornerRadius="10">
+                                
+                                <Button Background="Transparent"
+                                        Width="400"
+                                        Height="300"
+                                        CornerRadius="10"
+                                        Command="{Binding #RootControl.DataContext.OpenDetailsCommand, FallbackValue={x:Null}}"
+                                        CommandParameter="{Binding Id}">
+                                    <Grid RowDefinitions="3*,2*"
+                                         Margin="10">
+                                        <Border BorderBrush="Black"
+                                                Background="White"
+                                                BorderThickness="1"
+                                                CornerRadius="10"
+                                                HorizontalAlignment="Stretch"
+                                                VerticalAlignment="Stretch"
+                                                ClipToBounds="True">
+                                            
+                                            <Image Source="{Binding DisplayImage}"
+                                                   Stretch="UniformToFill"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center">
+                                            </Image>
+                                        </Border>
+                                        <Grid Row="1"
+                                              RowDefinitions="*,Auto">
+                                            <StackPanel >
+                                                <TextBlock Text="{Binding Name}"
+                                                           FontWeight="Bold"
+                                                           FontSize="16"
+                                                           TextWrapping="Wrap"
+                                                           Margin="0 0 0 2"/>
+                                                <TextBlock Text="{Binding Description}"
+                                                           TextAlignment="Justify"
+                                                           TextWrapping="Wrap"/>
+                                            </StackPanel>
+                                            <Grid Row="1" ColumnDefinitions="*, Auto">
+                                                <Button ToolTip.Tip="Добавить в корзину"
+                                                        Background="Transparent"
+                                                        VerticalAlignment="Center">
+                                                    <materialIcons:MaterialIcon Kind="CartAdd" Height="16"/>
+                                                </Button>
+                                                
+                                                <TextBlock Grid.Column="1"
+                                                           FontWeight="SemiBold"
+                                                           VerticalAlignment="Center">
+                                                    <Run Text="{Binding Price}"/>
+                                                    <Run Text="₽"/>
+                                                </TextBlock>
+                                            </Grid>
+                                        </Grid>
+                                    </Grid>
+                                </Button>
+                            </Border>
+                            
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                    
+                </ItemsControl>
+                
+            </ScrollViewer>
+            
+        </Grid>
+        
+        <Grid Grid.Row="2">
+            <Border Background="AliceBlue"
+                    Height="70"
+                    Padding="10"
+                    BorderBrush="Black"
+                    BorderThickness="0 1 0 0">
+                
+                <Grid>
+                    
+                    <StackPanel Orientation="Horizontal"
+                                HorizontalAlignment="Center"
+                                Spacing="10">
+                        
+                        <Button IsEnabled="{Binding CanGoBack}"
+                                Command="{Binding GoBackCommand}">
+                            
+                            <StackPanel Orientation="Horizontal">
+                                <materialIcons:MaterialIcon Kind="ChevronLeft"/>
+                                <TextBlock Text=" Назад"/>
+                            </StackPanel>
+                            
+                        </Button>
+                        
+                        <TextBlock VerticalAlignment="Center">
+                            <Run Text="Страница"/>
+                            <Run Text="{Binding CurrentPage}"/>
+                            <Run Text="из"/>
+                            <Run Text="{Binding TotalPages}"/>
+                        </TextBlock>
+                        
+                        <Button  IsEnabled="{Binding CanGoNext}"
+                                Command="{Binding GoNextCommand}">
+                            
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Вперед "/>
+                                <materialIcons:MaterialIcon Kind="ChevronRight"/>
+                            </StackPanel>
+                            
+                        </Button>
+                        
+                    </StackPanel>
+                    
+                </Grid>
+                
+            </Border>
+        </Grid>
+        
+    </Grid>
+    
+</UserControl>

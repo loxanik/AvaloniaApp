@@ -1,0 +1,41 @@
+using System.Linq;
+using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
+using Microsoft.EntityFrameworkCore.Query.Internal;
+using Shop.Interfaces;
+using Shop.Messages;
+using Shop.Models;
+
+namespace Shop.ViewModels;
+
+public partial class UserProfileControlViewModel : ViewModelBase
+{
+    private readonly IUserContext _userContext;
+    private readonly ILocalizationHelper _localizationHelper;
+    public User? User => _userContext.CurrentUser;
+    public PersonalInfo? PersonalInfo => User?.PersonalInfos.FirstOrDefault();
+    public string LocalizedRole => _localizationHelper.LocalizateRole(User?.Role.Name);
+    public string Patronymic => string.IsNullOrEmpty(PersonalInfo?.Patronymic) ? "не указано" : PersonalInfo.Patronymic;
+
+    public UserProfileControlViewModel(IUserContext userContext, ILocalizationHelper localizationHelper)
+    {
+        _userContext = userContext;
+        _localizationHelper = localizationHelper;
+        
+        _userContext.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName != nameof(_userContext.CurrentUser)) return;
+            OnPropertyChanged(nameof(User));
+            OnPropertyChanged(nameof(PersonalInfo));
+            OnPropertyChanged(nameof(Patronymic));
+            OnPropertyChanged(nameof(LocalizedRole));
+        };
+    }
+
+    [RelayCommand]
+    private void Logout()
+    {
+        _userContext.UserLogout();
+        WeakReferenceMessenger.Default.Send(new ChangeViewModelMessage(typeof(LoginControlViewModel)));
+    }
+}

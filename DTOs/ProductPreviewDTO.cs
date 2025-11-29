@@ -1,0 +1,14 @@
+using Avalonia.Media.Imaging;
+
+namespace Shop.DTOs;
+
+public class ProductPreviewDTO
+{
+    public int Id { get; set; }
+    public string Name { get; set; }
+    public string Description { get; set; }
+    public decimal Price { get; set; }
+    public string Category { get; set; }
+    public byte[]? Image { get; set; }
+    public Bitmap? DisplayImage { get; set; }
+}

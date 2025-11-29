@@ -1,0 +1,83 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:vm="clr-namespace:Shop.ViewModels"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="Shop.Views.UserProfileControlView"
+             x:DataType="vm:UserProfileControlViewModel">
+    
+    <UserControl.Styles>
+        <Style Selector="TextBlock">
+            <Setter Property="FontSize" Value="16"/>
+        </Style>
+    </UserControl.Styles>
+    
+    <Grid Background="AliceBlue">
+        
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        
+        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center"
+                   Grid.ColumnSpan="2"
+                   Text="{Binding LocalizedRole}"/>
+        
+        <StackPanel Grid.Row="1"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Center">
+            <TextBlock Text="Логин"
+                       Margin="0 5"/>
+            <TextBlock Text="{Binding User.Login}"
+                       Margin="5 0"/>
+            
+            <TextBlock Text="Почта"
+                       Margin="0 5"/>
+            <TextBlock Text="{Binding PersonalInfo.Email}"
+                       Margin="5 0"/>
+            
+            <TextBlock Text="Номер"
+                       Margin="0 5"/>
+            <TextBlock Text="{Binding PersonalInfo.PhoneNumber}"
+                       Margin="5 0"/>
+        </StackPanel>
+        
+        <StackPanel Grid.Row="1"
+                    Grid.Column="1"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Center">
+            <TextBlock Text="Имя"
+                       Margin="0 5"/>
+            <TextBlock Text="{Binding PersonalInfo.Name}"
+                       Margin="5 0"/>
+            
+            <TextBlock Text="Фамилия"
+                       Margin="0 5"/>
+            <TextBlock Text="{Binding PersonalInfo.Surname}"
+                       Margin="5 0"/>
+            
+            <TextBlock Text="Отчество"
+                       Margin="0 5"/>
+            <TextBlock Text="{Binding Patronymic}"
+                       Margin="5 0"/>
+        </StackPanel>
+        
+        <Button  Grid.Row="3"
+                 Grid.ColumnSpan="2"
+                 HorizontalAlignment="Center"
+                 Margin="20"
+                 Content="Выйти из аккаунта"
+                 CornerRadius="20"
+                 Command="{Binding LogoutCommand}"
+                 MinHeight="30"></Button>
+       
+    </Grid>
+</UserControl>
