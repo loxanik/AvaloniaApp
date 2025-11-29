@@ -3,9 +3,10 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:Shop.ViewModels"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
              x:Class="Shop.Views.ProductDetailsControlView"
-             x:DataType="vm:ProductDetailsControlViewModel">
+             x:DataType="vm:ProductDetailsControlViewModel"
+             x:Name="RootControl">
     
     <Grid>
         <!-- Основная карточка -->
@@ -59,13 +60,54 @@
                             <TextBlock Grid.Row="3" Text="Описание:" Margin="0 0 10 0"/>
                             <TextBlock Grid.Row="4" FontWeight="SemiBold" Text="Цена:" Margin="0 0 10 0"/>
                             
-                            <TextBlock Grid.Column="1" Text="{Binding CurrentProductDetails.Name}"/>
-                            <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding CurrentProductDetails.Category}"/>
-                            <TextBlock Grid.Column="1" Grid.Row="2" Text="{Binding CurrentProductDetails.Producer}"/>
-                            <TextBlock Grid.Column="1" Grid.Row="3" Text="{Binding CurrentProductDetails.Description}"/>
+                            <Grid Grid.Column="1">
+                                <TextBox BorderThickness="0"
+                                         Padding="5 0"
+                                         IsVisible="{Binding CanEdit}"
+                                         Text="{Binding CurrentProductDetails.Name}"/>
+                                
+                                <TextBlock IsVisible="{Binding !CanEdit}"
+                                            Text="{Binding CurrentProductDetails.Name}"/>
+                            </Grid>
+                            
+                            <Grid Grid.Row="1" Grid.Column="1">
+                                <TextBox BorderThickness="0"
+                                         Padding="5 0"
+                                         IsVisible="{Binding CanEdit}"
+                                         Text="{Binding CurrentProductDetails.Category}"/>
+                                
+                                <TextBlock IsVisible="{Binding !CanEdit}"
+                                           Text="{Binding CurrentProductDetails.Category}"/>
+                            </Grid>
+                            
+                            <Grid Grid.Row="2" Grid.Column="1">
+                                <TextBox BorderThickness="0"
+                                         Padding="5 0"
+                                         IsVisible="{Binding CanEdit}"
+                                         Text="{Binding CurrentProductDetails.Producer}"/>
+                                
+                                <TextBlock IsVisible="{Binding !CanEdit}"
+                                           Text="{Binding CurrentProductDetails.Producer}"/>
+                            </Grid>
+                            
+                            <Grid Grid.Row="3" Grid.Column="1">
+                                <TextBox BorderThickness="0"
+                                         Padding="5 0"
+                                         IsVisible="{Binding CanEdit}"
+                                         Text="{Binding CurrentProductDetails.Description}"/>
+                                
+                                <TextBlock IsVisible="{Binding !CanEdit}"
+                                           Text="{Binding CurrentProductDetails.Description}"/>
+                            </Grid>
                             <TextBlock FontWeight="SemiBold" Grid.Column="1" Grid.Row="4">
-                                <Run Text="{Binding CurrentProductDetails.Price}"/>
-                                <Run Text="₽"/>
+                                <TextBlock Text="{Binding CurrentProductDetails.Price}"
+                                         IsVisible="{Binding !CanEdit}"/>
+                                
+                                <TextBox Text="{Binding CurrentProductDetails.Price}"
+                                         BorderThickness="0"
+                                         Padding="5 0"
+                                         IsVisible="{Binding CanEdit}"/>
+                                <TextBlock Text="₽"/>
                             </TextBlock>
                             
                             <StackPanel Orientation="Horizontal"
@@ -73,7 +115,8 @@
                                         Grid.ColumnSpan="2"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
-                                        Margin="0,5">
+                                        Margin="0,5"
+                                        Spacing="20">
                                 <Button Content="Вернуться"
                                         Command="{Binding GoToCatalogCommand}"/>
                                 <Button Content="Сохранить"
@@ -103,12 +146,27 @@
                                                 BorderBrush="#E0E0E0"
                                                 BorderThickness="0,0,0,1"
                                                 Margin="0,2">
-                                            <TextBlock>
-                                                <Run Text="{Binding Name}" FontWeight="SemiBold"/>
-                                                <Run Text=": "/>
-                                                <Run Text="{Binding Value}"/>
-                                                <Run Text="{Binding Unit}"/>
-                                            </TextBlock>
+                                            <Grid>
+                                                
+                                                <TextBlock IsVisible="{Binding !#RootControl.DataContext.CanEdit}">
+                                                    <Run Text="{Binding Name}" FontWeight="SemiBold"/>
+                                                    <Run Text=": "/>
+                                                    <Run Text="{Binding Value}"/>
+                                                    <Run Text="{Binding Unit}"/>
+                                                </TextBlock>
+                                                
+                                                <StackPanel Orientation="Horizontal"
+                                                            Spacing="1"
+                                                            IsVisible="{Binding #RootControl.DataContext.CanEdit}">
+                                                    <TextBox Text="{Binding Name}"
+                                                             BorderThickness="0"/>
+                                                    <TextBox Text="{Binding Value}"
+                                                             BorderThickness="0"/>
+                                                    <TextBox Text="{Binding Unit}"
+                                                             BorderThickness="0"/>
+                                                </StackPanel>
+                                                
+                                            </Grid>
                                         </Border>
                                     </DataTemplate>
                                 </ListBox.ItemTemplate>

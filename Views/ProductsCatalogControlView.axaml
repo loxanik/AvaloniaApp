@@ -97,7 +97,7 @@
                                         Command="{Binding #RootControl.DataContext.OpenDetailsCommand, FallbackValue={x:Null}}"
                                         CommandParameter="{Binding Id}">
                                     <Grid RowDefinitions="3*,2*"
-                                         Margin="10">
+                                          Margin="10">
                                         <Border BorderBrush="Black"
                                                 Background="White"
                                                 BorderThickness="1"
