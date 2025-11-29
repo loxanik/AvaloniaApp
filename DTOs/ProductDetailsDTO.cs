@@ -10,6 +10,7 @@ public class ProductDetailsDTO
     public string Description { get; set; } = null!;
     public decimal Price { get; set; }
     public string Producer { get; set; } = null!;
+    public string Country { get; set; } = null!;
     public string Category { get; set; } = null!;
     public byte[]? Image { get; set; }
     public Bitmap? DisplayImage { get; set; }

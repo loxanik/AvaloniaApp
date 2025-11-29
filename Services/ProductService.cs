@@ -129,6 +129,7 @@ public class ProductService : IProductService
                     Description = p.Description,
                     Category = p.Category.Name,
                     Producer = p.Producer.Name,
+                    Country = p.Producer.Country.Name,
                     Image = p.Image.Image1,
                     Price = p.ShopProducts
                         .SelectMany(sp => sp.HistoryCosts)
@@ -156,6 +157,64 @@ public class ProductService : IProductService
         {
             AppLogger.LogError(e, $"Get product details error: id: {id}");
             return null;
+        }
+    }
+
+    public async Task UpdateProductDetailsAsync(ProductDetailsDTO productDto)
+    {
+        try
+        {
+            var product = await _shopContext.Products
+                .Include(p => p.Category)
+                .Include(p => p.Producer)
+                    .ThenInclude(producer => producer.Country)
+                .Include(p => p.Parameters)
+                .Include(p => p.Image)
+                .Include(p => p.ShopProducts)
+                    .ThenInclude(sp => sp.HistoryCosts)
+                .FirstOrDefaultAsync(p => p.Id == productDto.Id);
+            
+            if (product == null) return;
+            
+            product.Name = productDto.Name;
+            product.Description = productDto.Description;
+            product.Producer.Name = productDto.Producer;
+            product.Category.Name = productDto.Category;
+            product.Producer.Country.Name = productDto.Country;
+            
+            //TODO сделать изменение фотографии
+
+            var shopProduct = product.ShopProducts.FirstOrDefault();
+            if (shopProduct != null)
+            {
+                var lastHistoryCost = shopProduct.HistoryCosts
+                    .OrderByDescending(sp => sp.Id)
+                    .FirstOrDefault();
+
+                decimal oldCost = lastHistoryCost?.NewCost ?? 0;
+                decimal newCost = productDto?.Price ?? oldCost;
+
+                if (newCost != oldCost)
+                {
+                    var historyCost = new HistoryCost()
+                    {
+                        Id = shopProduct.Id,
+                        OldCost = oldCost,
+                        NewCost = newCost,
+                    };
+                    
+                    _shopContext.HistoryCosts.Add(historyCost);
+                }
+                
+                //TODO сделать обновление параметров
+                
+            }
+            
+            await _shopContext.SaveChangesAsync();
+        }
+        catch (Exception e)
+        {
+            AppLogger.LogError(e, $"Update product details error service: id: {productDto.Id}");
         }
     }
 }

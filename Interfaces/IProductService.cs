@@ -10,4 +10,5 @@ public interface IProductService
     Task<List<CategoryDTO>?> GetCategoriesAsync();
     Task<List<ProducerDTO>?> GetProducersAsync();
     Task<ProductDetailsDTO?> GetProductDetailsAsync(int id);
+    Task UpdateProductDetailsAsync(ProductDetailsDTO product);
 }

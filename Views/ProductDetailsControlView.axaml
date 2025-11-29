@@ -50,68 +50,79 @@
                             Background="#F8F9FA"
                             Margin="15,0,15,15"
                             Padding="15">
-                        <Grid RowDefinitions="*,*,*,*,*,Auto"
+                        <Grid RowDefinitions="*,*,*,*,*,*,Auto"
                               ColumnDefinitions="Auto,*"
                               Margin="5">
                             
                             <TextBlock Text="Название:"/>
                             <TextBlock Grid.Row="1" Text="Категория:" Margin="0 0 10 0"/>
                             <TextBlock Grid.Row="2" Text="Производитель:" Margin="0 0 10 0"/>
-                            <TextBlock Grid.Row="3" Text="Описание:" Margin="0 0 10 0"/>
-                            <TextBlock Grid.Row="4" FontWeight="SemiBold" Text="Цена:" Margin="0 0 10 0"/>
+                            <TextBlock Grid.Row="3" Text="Страна:" Margin="0 0 10 0"/>
+                            <TextBlock Grid.Row="4" Text="Описание:" Margin="0 0 10 0"/>
+                            <TextBlock Grid.Row="5" FontWeight="SemiBold" Text="Цена:" Margin="0 0 10 0"/>
                             
                             <Grid Grid.Column="1">
                                 <TextBox BorderThickness="0"
                                          Padding="5 0"
-                                         IsVisible="{Binding CanEdit}"
+                                         IsVisible="{Binding IsEditing}"
                                          Text="{Binding CurrentProductDetails.Name}"/>
                                 
-                                <TextBlock IsVisible="{Binding !CanEdit}"
+                                <TextBlock IsVisible="{Binding !IsEditing}"
                                             Text="{Binding CurrentProductDetails.Name}"/>
                             </Grid>
                             
                             <Grid Grid.Row="1" Grid.Column="1">
                                 <TextBox BorderThickness="0"
                                          Padding="5 0"
-                                         IsVisible="{Binding CanEdit}"
+                                         IsVisible="{Binding IsEditing}"
                                          Text="{Binding CurrentProductDetails.Category}"/>
                                 
-                                <TextBlock IsVisible="{Binding !CanEdit}"
+                                <TextBlock IsVisible="{Binding !IsEditing}"
                                            Text="{Binding CurrentProductDetails.Category}"/>
                             </Grid>
                             
                             <Grid Grid.Row="2" Grid.Column="1">
                                 <TextBox BorderThickness="0"
                                          Padding="5 0"
-                                         IsVisible="{Binding CanEdit}"
+                                         IsVisible="{Binding IsEditing}"
                                          Text="{Binding CurrentProductDetails.Producer}"/>
                                 
-                                <TextBlock IsVisible="{Binding !CanEdit}"
+                                <TextBlock IsVisible="{Binding !IsEditing}"
                                            Text="{Binding CurrentProductDetails.Producer}"/>
                             </Grid>
                             
                             <Grid Grid.Row="3" Grid.Column="1">
                                 <TextBox BorderThickness="0"
                                          Padding="5 0"
-                                         IsVisible="{Binding CanEdit}"
+                                         IsVisible="{Binding IsEditing}"
+                                         Text="{Binding CurrentProductDetails.Country}"/>
+                                
+                                <TextBlock IsVisible="{Binding !IsEditing}"
+                                           Text="{Binding CurrentProductDetails.Country}"/>
+                            </Grid>
+                            
+                            <Grid Grid.Row="4" Grid.Column="1">
+                                <TextBox BorderThickness="0"
+                                         Padding="5 0"
+                                         IsVisible="{Binding IsEditing}"
                                          Text="{Binding CurrentProductDetails.Description}"/>
                                 
-                                <TextBlock IsVisible="{Binding !CanEdit}"
+                                <TextBlock IsVisible="{Binding !IsEditing}"
                                            Text="{Binding CurrentProductDetails.Description}"/>
                             </Grid>
-                            <TextBlock FontWeight="SemiBold" Grid.Column="1" Grid.Row="4">
+                            <TextBlock FontWeight="SemiBold" Grid.Column="1" Grid.Row="5">
                                 <TextBlock Text="{Binding CurrentProductDetails.Price}"
-                                         IsVisible="{Binding !CanEdit}"/>
+                                         IsVisible="{Binding !IsEditing}"/>
                                 
                                 <TextBox Text="{Binding CurrentProductDetails.Price}"
                                          BorderThickness="0"
                                          Padding="5 0"
-                                         IsVisible="{Binding CanEdit}"/>
+                                         IsVisible="{Binding IsEditing}"/>
                                 <TextBlock Text="₽"/>
                             </TextBlock>
                             
                             <StackPanel Orientation="Horizontal"
-                                        Grid.Row="5"
+                                        Grid.Row="6"
                                         Grid.ColumnSpan="2"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
@@ -119,8 +130,15 @@
                                         Spacing="20">
                                 <Button Content="Вернуться"
                                         Command="{Binding GoToCatalogCommand}"/>
-                                <Button Content="Сохранить"
-                                        IsVisible="{Binding CanEdit}"/>
+                                
+                                <Grid IsVisible="{Binding CanEdit}">
+                                    <Button Content="{Binding SaveButtonText}"
+                                            IsVisible="{Binding IsEditing}"
+                                            Command="{Binding EndEditCommand}"/>
+                                    <Button Content="Изменить"
+                                            IsVisible="{Binding !IsEditing}"
+                                            Command="{Binding BeginEditCommand}"/>
+                                </Grid>
                             </StackPanel>
                             
                         </Grid>
@@ -148,7 +166,7 @@
                                                 Margin="0,2">
                                             <Grid>
                                                 
-                                                <TextBlock IsVisible="{Binding !#RootControl.DataContext.CanEdit}">
+                                                <TextBlock IsVisible="{Binding !#RootControl.DataContext.IsEditing}">
                                                     <Run Text="{Binding Name}" FontWeight="SemiBold"/>
                                                     <Run Text=": "/>
                                                     <Run Text="{Binding Value}"/>
@@ -157,7 +175,7 @@
                                                 
                                                 <StackPanel Orientation="Horizontal"
                                                             Spacing="1"
-                                                            IsVisible="{Binding #RootControl.DataContext.CanEdit}">
+                                                            IsVisible="{Binding #RootControl.DataContext.IsEditing}">
                                                     <TextBox Text="{Binding Name}"
                                                              BorderThickness="0"/>
                                                     <TextBox Text="{Binding Value}"
