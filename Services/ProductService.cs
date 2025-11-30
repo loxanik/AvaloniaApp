@@ -217,66 +217,85 @@ public class ProductService : IProductService
             AppLogger.LogError(e, $"Update product details error service: id: {productDto.Id}");
         }
     }
-    
+
+    public async Task DeleteProductAsync(int id)
+    {
+        try
+        {
+            await _shopContext.Products.Where(p => p.Id == id).ExecuteDeleteAsync();
+        }
+        catch (Exception e)
+        {
+            AppLogger.LogError(e, $"Delete product error: id: {id}");
+        }
+    }
+
     private async Task UpdateParametersAsync(Product entity, List<ParametersDTO>? newParameters)
     {
-        if (newParameters == null) 
+        try
         {
-            // Если новые параметры null - удаляем все старые
-            _shopContext.Parameters.RemoveRange(entity.Parameters);
-            return;
-        }
-    
-        var existingParams = entity.Parameters.ToList();
-        
-        // 1. ОБНОВЛЯЕМ существующие параметры и УДАЛЯЕМ лишние
-        foreach (var existingParam in existingParams.ToList()) // ToList() для копии
-        {
-            var newParamDto = newParameters.FirstOrDefault(np => np.Id == existingParam.Id);
-            
-            if (newParamDto != null)
+            if (newParameters == null) 
             {
-                // ОБНОВЛЯЕМ существующий параметр
-                existingParam.Name = newParamDto.Name;
-                existingParam.Value = newParamDto.Value;
+                // Если новые параметры null - удаляем все старые
+                _shopContext.Parameters.RemoveRange(entity.Parameters);
+                return;
+            }
+        
+            var existingParams = entity.Parameters.ToList();
+            
+            // 1. ОБНОВЛЯЕМ существующие параметры и УДАЛЯЕМ лишние
+            foreach (var existingParam in existingParams.ToList()) // ToList() для копии
+            {
+                var newParamDto = newParameters.FirstOrDefault(np => np.Id == existingParam.Id);
                 
-                // Обновляем Unit если нужно
-                if (existingParam.Unit.Name != newParamDto.Unit)
+                if (newParamDto != null)
                 {
-                    var unit = await _shopContext.UnitOfMeasurements
-                        .FirstOrDefaultAsync(u => u.Name == newParamDto.Unit) 
-                        ?? new UnitOfMeasurement { Name = newParamDto.Unit };
-                    existingParam.Unit = unit;
+                    // ОБНОВЛЯЕМ существующий параметр
+                    existingParam.Name = newParamDto.Name;
+                    existingParam.Value = newParamDto.Value;
+                    
+                    // Обновляем Unit если нужно
+                    if (existingParam.Unit.Name != newParamDto.Unit)
+                    {
+                        var unit = await _shopContext.UnitOfMeasurements
+                            .FirstOrDefaultAsync(u => u.Name == newParamDto.Unit) 
+                            ?? new UnitOfMeasurement { Name = newParamDto.Unit };
+                        existingParam.Unit = unit;
+                    }
+                }
+                else
+                {
+                    // УДАЛЯЕМ параметр которого нет в новых данных
+                    _shopContext.Parameters.Remove(existingParam);
+                    existingParams.Remove(existingParam); // Убираем из локальной коллекции
                 }
             }
-            else
+        
+            // 2. ДОБАВЛЯЕМ новые параметры (без Id или с Id = 0/null)
+            foreach (var newParamDto in newParameters)
             {
-                // УДАЛЯЕМ параметр которого нет в новых данных
-                _shopContext.Parameters.Remove(existingParam);
-                existingParams.Remove(existingParam); // Убираем из локальной коллекции
+                // Если параметр новый (нет Id или Id = 0)
+                if (newParamDto.Id == null || newParamDto.Id == 0)
+                {
+                    var unit = await _shopContext.UnitOfMeasurements
+                                   .FirstOrDefaultAsync(u => u.Name == newParamDto.Unit)
+                               ?? new UnitOfMeasurement { Name = newParamDto.Unit };
+    
+                    var newParameter = new Parameter
+                    {
+                        Name = newParamDto.Name,
+                        Value = newParamDto.Value,
+                        Unit = unit,
+                        Product = entity
+                    };
+    
+                    entity.Parameters.Add(newParameter);
+                }
             }
         }
-    
-        // 2. ДОБАВЛЯЕМ новые параметры (без Id или с Id = 0/null)
-        foreach (var newParamDto in newParameters)
+        catch (Exception e)
         {
-            // Если параметр новый (нет Id или Id = 0)
-            if (newParamDto.Id == null || newParamDto.Id == 0)
-            {
-                var unit = await _shopContext.UnitOfMeasurements
-                    .FirstOrDefaultAsync(u => u.Name == newParamDto.Unit) 
-                    ?? new UnitOfMeasurement { Name = newParamDto.Unit };
-    
-                var newParameter = new Parameter
-                {
-                    Name = newParamDto.Name,
-                    Value = newParamDto.Value,
-                    Unit = unit,
-                    Product = entity
-                };
-                
-                entity.Parameters.Add(newParameter);
-            }
+            AppLogger.LogError(e, $"Update parameters error service: id: {entity.Id}");
         }
     }
 }

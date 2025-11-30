@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:Shop.ViewModels"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
              x:Class="Shop.Views.ProductDetailsControlView"
              x:DataType="vm:ProductDetailsControlViewModel"
@@ -128,16 +129,52 @@
                                         VerticalAlignment="Center"
                                         Margin="0,5"
                                         Spacing="20">
-                                <Button Content="Вернуться"
-                                        Command="{Binding GoToCatalogCommand}"/>
                                 
-                                <Grid IsVisible="{Binding CanEdit}">
-                                    <Button Content="{Binding SaveButtonText}"
-                                            IsVisible="{Binding IsEditing}"
-                                            Command="{Binding EndEditCommand}"/>
-                                    <Button Content="Изменить"
-                                            IsVisible="{Binding !IsEditing}"
-                                            Command="{Binding BeginEditCommand}"/>
+                                <Button Command="{Binding GoToCatalogCommand}">
+                                    
+                                    <StackPanel Orientation="Horizontal"
+                                                Spacing="2">
+                                        <materialIcons:MaterialIcon Kind="KeyboardReturn"/>
+                                        <TextBlock Text="Вернуться"/>
+                                    </StackPanel>
+                                    
+                                </Button>
+                                
+                                <Grid ColumnDefinitions="Auto, Auto"
+                                      IsVisible="{Binding CanEdit}">
+                                    <Button IsVisible="{Binding IsEditing}"
+                                            Command="{Binding EndEditCommand}">
+                                        
+                                        <StackPanel Orientation="Horizontal"
+                                                    Spacing="2">
+                                            <materialIcons:MaterialIcon Kind="ContentSave" />
+                                            <TextBlock Text="{Binding SaveButtonText}"/>
+                                        </StackPanel>
+                                        
+                                    </Button>
+                                    
+                                    <Button IsVisible="{Binding !IsEditing}"
+                                            Command="{Binding BeginEditCommand}">
+                                        
+                                        <StackPanel Orientation="Horizontal"
+                                                    Spacing="2">
+                                            <materialIcons:MaterialIcon Kind="Edit" />
+                                            <TextBlock Text="Изменить"/>
+                                        </StackPanel>
+                                        
+                                    </Button>
+                                    
+                                    <Button Grid.Column="1" 
+                                            Margin="20, 0, 0, 0">
+                                    
+                                        <StackPanel Orientation="Horizontal"
+                                                    Spacing="2">
+                                            <materialIcons:MaterialIcon Kind="Delete"/>
+                                            <TextBlock Text="Удалить"/>
+                                        </StackPanel>
+                                    
+                                    </Button>
+                                    
                                 </Grid>
                             </StackPanel>
                             
@@ -191,21 +228,36 @@
                                 </ListBox.ItemTemplate>
                             </ListBox>
                         </ScrollViewer>
+                        
                         <StackPanel Grid.Row="1"
                                     Orientation="Horizontal"
                                     Spacing="20"
-                                    Margin="5"
+                                    Margin="0, 0,0, 25"
                                     IsVisible="{Binding IsEditing}"
-                                    HorizontalAlignment="Center">
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center">
                             
-                            <Button Content="Удалить"
-                                    IsEnabled="{Binding SelectedParameter, 
+                            <Button IsEnabled="{Binding SelectedParameter, 
                                     Converter={x:Static ObjectConverters.IsNotNull}}"
                                     Command="{Binding RemoveParameterCommand}"
-                                    CommandParameter="{Binding SelectedParameter}"/>
+                                    CommandParameter="{Binding SelectedParameter}">
+                                
+                                <StackPanel Orientation="Horizontal"
+                                            Spacing="2">
+                                    <materialIcons:MaterialIcon Kind="Delete" />
+                                    <TextBlock Text="Удалить"/>
+                                </StackPanel>
+                                
+                                
+                            </Button>
                             
-                            <Button Content="Добавить"
-                                    Command="{Binding AddParameterCommand}"/>
+                            <Button Command="{Binding AddParameterCommand}">
+                                <StackPanel Orientation="Horizontal"
+                                            Spacing="2">
+                                    <materialIcons:MaterialIcon Kind="Add" />
+                                    <TextBlock Text="Добавить"/>
+                                </StackPanel>
+                            </Button>
                             
                         </StackPanel>
                     </Grid>

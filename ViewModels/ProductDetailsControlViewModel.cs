@@ -73,10 +73,28 @@ public partial class ProductDetailsControlViewModel : ViewModelBase, IParameteri
     }
 
     [RelayCommand]
-    private void GoToCatalog()
+    private async Task GoToCatalogAsync()
     {
         if (IsEditing)
-            CancelEdit();
+        {
+            var dialog = MessageBoxManager.GetMessageBoxStandard(
+                "Подтверждение действия",
+                "Вы действительно хотите отменить изменения и перейти в каталог?",
+                ButtonEnum.YesNo,
+                Icon.Question
+            );
+
+            var result = await dialog.ShowAsync();
+
+            if (result == ButtonResult.Yes)
+            {
+                CancelEdit();
+            }
+            else
+            {
+                return;
+            }
+        }
         
         WeakReferenceMessenger.Default.Send(new ChangeViewModelMessage(typeof(ProductsCatalogControlViewModel)));
     }
@@ -176,7 +194,7 @@ public partial class ProductDetailsControlViewModel : ViewModelBase, IParameteri
 
                 var msg = MessageBoxManager.GetMessageBoxStandard("Сохранение",
                     "Изменения успешно сохранены.",
-                    icon: Icon.Info);
+                    icon: Icon.Success);
                 await msg.ShowAsync();
             }
             else
@@ -217,11 +235,41 @@ public partial class ProductDetailsControlViewModel : ViewModelBase, IParameteri
     }
 
     [RelayCommand]
-    private void RemoveParameter(ParametersModel parameter)
+    private async Task RemoveParameterAsync(ParametersModel parameter)
     {
         if (CurrentProductDetails == null) return;
+        
+        try
+        {
+            var dialog = MessageBoxManager.GetMessageBoxStandard(
+                "Подтверждение удаления",
+                $"Вы действительно хотите удалить выбранный параметр?\n\"{SelectedParameter.Name}" +
+                $" {SelectedParameter.Value}" +
+                $" {SelectedParameter.Unit}\"",
+                ButtonEnum.YesNo,
+                icon: Icon.Question);
+            
+            var result = await dialog.ShowAsync();
 
-        CurrentProductDetails.Parameters.Remove(parameter);
+            if (result == ButtonResult.Yes)
+            {
+                CurrentProductDetails.Parameters.Remove(parameter);
+                SelectedParameter = null;
+                
+                var successMsg = MessageBoxManager.GetMessageBoxStandard(
+                    "Успех",
+                    "Параметр удален",
+                    ButtonEnum.Ok,
+                    Icon.Success
+                );
+                await successMsg.ShowAsync();
+            }
+        }
+        catch (Exception e)
+        {
+            AppLogger.LogError(e, $"Error removing parameter on viewmodel: {parameter.Name}");
+        }
+        
     }
     
     private ProductDetailsModel CloneProduct(ProductDetailsModel product)
