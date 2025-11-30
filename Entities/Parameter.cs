@@ -1,4 +1,7 @@
-﻿namespace Shop.Entities;
+﻿using System;
+using System.Collections.Generic;
+
+namespace Shop.Entities;
 
 public partial class Parameter
 {

@@ -53,16 +53,26 @@ public partial class ProductDetailsControlViewModel : ViewModelBase, IParameteri
         if (param is not int productId) return;
         
         _productId = productId;
-        Task.Run(async () => await LoadProductDetails());
+        _ = LoadProductDetails();
     }
 
     private async Task LoadProductDetails()
     {
         try
         {
-            var dto = await _productService.GetProductDetailsAsync(_productId);
+            ProductDetailsDTO? dto = null;
             
-            if (dto == null) return;
+            if (CanEdit)
+                dto = await _productService.GetProductDetailsAsync(_productId, true);
+            else
+                dto = await _productService.GetProductDetailsAsync(_productId, false);
+            
+            if (dto == null)
+            {
+                WeakReferenceMessenger.Default.Send(
+                        new ChangeViewModelMessage(typeof(ProductsCatalogControlViewModel)));
+                return;
+            }
             
             CurrentProductDetails = new ProductDetailsModel(dto);
         }
@@ -270,6 +280,49 @@ public partial class ProductDetailsControlViewModel : ViewModelBase, IParameteri
             AppLogger.LogError(e, $"Error removing parameter on viewmodel: {parameter.Name}");
         }
         
+    }
+
+    [RelayCommand]
+    private async Task DeleteProductAsync()
+    {
+        try
+        {
+            var dialog = MessageBoxManager.GetMessageBoxStandard("Подтверждение действия",
+                $"Вы действительно хотите удалить данный товар?\n" +
+                $"{CurrentProductDetails.Name}",
+                ButtonEnum.YesNo,
+                icon: Icon.Warning);
+            
+            var result = await dialog.ShowAsync();
+
+            if (result == ButtonResult.Yes)
+            {
+                bool isSuccess = await _productService.SoftDeleteProductAsync(_productId);
+
+                if (isSuccess)
+                {
+                    var msg = MessageBoxManager.GetMessageBoxStandard("Удаление",
+                        "Товар был успешно удален",
+                        icon: Icon.Success);
+                    await msg.ShowAsync();
+                    
+                    IsEditing = false;
+                    HasChanges = false;
+                    await GoToCatalogAsync();
+                }
+                else
+                {
+                    var msg = MessageBoxManager.GetMessageBoxStandard("Ошибка",
+                        "Произошла ошибка удаления",
+                        icon: Icon.Error);
+                    await msg.ShowAsync();
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            AppLogger.LogError(e, $"Error removing product viewmodel: id: {_productId}");
+        }
     }
     
     private ProductDetailsModel CloneProduct(ProductDetailsModel product)

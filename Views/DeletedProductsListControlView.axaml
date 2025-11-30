@@ -1,0 +1,68 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:vm="clr-namespace:Shop.ViewModels"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:DataType="vm:DeletedProductsListControlViewModel"
+             x:Class="Shop.Views.DeletedProductsListControlView">
+    
+    <Grid RowDefinitions="*, Auto">
+        
+        <ScrollViewer>
+            <ListBox ItemsSource="{Binding DeletedProducts}"
+                     SelectedItem="{Binding SelectedProduct}">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        
+                        <Border Background="AliceBlue"
+                                CornerRadius="10"
+                                BorderThickness="1"
+                                BorderBrush="Black">
+                            <Grid>
+                                <StackPanel Orientation="Horizontal"
+                                            Spacing="5">
+                                    <TextBlock>
+                                        <Run Text="Id:"/>
+                                        <Run Text="{Binding Id}"/>
+                                    </TextBlock>
+                                    
+                                    <TextBlock>
+                                        <Run Text="Название:"/>
+                                        <Run Text="{Binding Name}"/>
+                                    </TextBlock>
+                                    
+                                    <TextBlock>
+                                        <Run Text="Категория:"/>
+                                        <Run Text="{Binding Category}"/>
+                                    </TextBlock>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                        
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </ScrollViewer>
+        
+        <Grid Grid.Row="1"
+              Margin="5">
+            <StackPanel HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Spacing="20"
+                        Orientation="Horizontal">
+                
+                <Button Content="Загрузить"
+                        Command="{Binding GetDeletedProductsCommand}"/>
+                
+                <Button Content="Восстановить"
+                        Command="{Binding RestoreSelectedProductCommand}"
+                        CommandParameter="{Binding SelectedProduct}"/>
+                
+            </StackPanel>
+            
+        </Grid>
+        
+    </Grid>
+    
+</UserControl>

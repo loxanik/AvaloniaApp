@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Shop.Entities;
 
@@ -15,6 +16,8 @@ public partial class Product
     public int ProducerId { get; set; }
 
     public int? ImageId { get; set; }
+
+    public bool IsDeleted { get; set; }
 
     public virtual Category Category { get; set; } = null!;
 

@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System;
+using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
 
 namespace Shop.Entities;
 
@@ -207,6 +209,9 @@ public partial class ShopContext : DbContext
                 .HasMaxLength(200)
                 .HasColumnName("description");
             entity.Property(e => e.ImageId).HasColumnName("imageId");
+            entity.Property(e => e.IsDeleted)
+                .HasDefaultValue(false)
+                .HasColumnName("isDeleted");
             entity.Property(e => e.Name)
                 .HasMaxLength(40)
                 .HasColumnName("name");

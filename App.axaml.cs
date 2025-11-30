@@ -41,6 +41,7 @@ public partial class App : Application
         services.AddSingleton<ProductsCatalogControlViewModel>();
         services.AddSingleton<UserProfileControlViewModel>();
         services.AddSingleton<CartControlViewModel>();
+        services.AddSingleton<DeletedProductsListControlViewModel>();
         
         services.AddTransient<LoginControlViewModel>();
         services.AddTransient<RegistrationControlViewModel>();

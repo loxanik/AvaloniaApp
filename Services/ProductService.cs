@@ -26,6 +26,7 @@ public class ProductService : IProductService
         try
         {
             var query = _shopContext.Products
+                .Where(p => !p.IsDeleted)
                 .AsNoTracking()
                 .Include(p => p.Category)
                 .AsQueryable();
@@ -116,12 +117,19 @@ public class ProductService : IProductService
         }
     }
 
-    public async Task<ProductDetailsDTO?> GetProductDetailsAsync(int id)
+    public async Task<ProductDetailsDTO?> GetProductDetailsAsync(int id, bool includeDeleted = false)
     {
         try
         {
-            var product = await _shopContext.Products
-                .Where(p => p.Id == id)
+            var query = _shopContext.Products.Where(p => p.Id == id);
+
+            if (!includeDeleted)
+            {
+                query = query.Where(p => !p.IsDeleted);
+            }
+            
+            var product = await query
+                .Include(p => p.Image)
                 .Select(p => new ProductDetailsDTO
                 {
                     Id = p.Id,
@@ -143,7 +151,8 @@ public class ProductService : IProductService
                             Name = param.Name,
                             Value = param.Value,
                             Unit = param.Unit.Name
-                        }).ToList()
+                        }).ToList(),
+                    IsDeleted = p.IsDeleted
                 }).FirstOrDefaultAsync();
 
             if (product != null)
@@ -182,6 +191,7 @@ public class ProductService : IProductService
             entity.Producer.Name = productDto.Producer;
             entity.Category.Name = productDto.Category;
             entity.Producer.Country.Name = productDto.Country;
+            entity.IsDeleted = productDto.IsDeleted;
             
             //TODO сделать изменение фотографии
 
@@ -218,15 +228,143 @@ public class ProductService : IProductService
         }
     }
 
-    public async Task DeleteProductAsync(int id)
+    public async Task<bool> SoftDeleteProductAsync(int id)
     {
         try
         {
-            await _shopContext.Products.Where(p => p.Id == id).ExecuteDeleteAsync();
+            var product = await _shopContext.Products
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (product == null)
+            {
+                return false;
+            }
+
+            if (product.IsDeleted)
+            {
+                return false;
+            }
+
+            product.IsDeleted = true;
+        
+            await _shopContext.SaveChangesAsync();
+        
+            return true;
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            AppLogger.LogError(e, $"Delete product error: id: {id}");
+            AppLogger.LogError(ex, $"Error deleting product: {id}");
+            return false;
+        }
+    }
+
+    public async Task<bool> HardDeleteProductAsync(int id)
+    {
+        try
+        {
+            // Находим товар со всеми зависимостями
+            var product = await _shopContext.Products
+                .Include(p => p.Parameters)
+                .Include(p => p.ShopProducts)
+                .ThenInclude(sp => sp.HistoryCosts)
+                .Include(p => p.Image)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (product == null)
+            {
+                return false;
+            }
+
+            // Удаляем зависимости в правильном порядке
+            if (product.ShopProducts?.Any() == true)
+            {
+                foreach (var shopProduct in product.ShopProducts.ToList())
+                {
+                    if (shopProduct.HistoryCosts?.Any() == true)
+                    {
+                        _shopContext.HistoryCosts.RemoveRange(shopProduct.HistoryCosts);
+                    }
+                    _shopContext.ShopProducts.Remove(shopProduct);
+                }
+            }
+
+            if (product.Parameters?.Any() == true)
+            {
+                _shopContext.Parameters.RemoveRange(product.Parameters);
+            }
+
+            if (product.Image != null)
+            {
+                _shopContext.Images.Remove(product.Image);
+            }
+
+            // Удаляем сам товар
+            _shopContext.Products.Remove(product);
+
+            await _shopContext.SaveChangesAsync();
+        
+            return true;
+        }
+        catch (Exception ex)
+        {
+            AppLogger.LogError(ex, $"Error hard-deleting product: {id}");
+            return false;
+        }
+    }
+
+    public async Task<bool> RestoreSoftDeletedProductAsync(int id)
+    {
+        try
+        {
+            var product = await _shopContext.Products
+                .FirstOrDefaultAsync(p => p.Id == id && p.IsDeleted);
+
+            if (product == null)
+            {
+                return false;
+            }
+
+            product.IsDeleted = false;
+
+            await _shopContext.SaveChangesAsync();
+        
+            return true;
+        }
+        catch (Exception ex)
+        {
+            AppLogger.LogError(ex, $"Error restoring product: {id}");
+            return false;
+        }
+    }
+
+    public async Task<List<ProductPreviewDTO>?> GetDeletedProductsAsync()
+    {
+        try
+        {
+            var deletedProducts = await _shopContext.Products
+                .Where(p => p.IsDeleted)
+                .Include(p => p.Category)
+                .Select(p => new ProductPreviewDTO
+                {
+                    Id = p.Id,
+                    Name = p.Name,
+                    Description = p.Description,
+                    Category = p.Category.Name,
+                    Price = p.ShopProducts
+                        .SelectMany(sp => sp.HistoryCosts)
+                        .OrderByDescending(sp => sp.Id)
+                        .Select(sp => sp.NewCost)
+                        .FirstOrDefault(),
+                    IsDeleted = p.IsDeleted // Показываем статус
+                })
+                .ToListAsync();
+
+            return deletedProducts;
+        }
+        catch (Exception ex)
+        {
+            AppLogger.LogError(ex, "Error getting deleted products");
+            return null;
         }
     }
 

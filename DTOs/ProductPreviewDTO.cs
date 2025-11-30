@@ -9,6 +9,7 @@ public class ProductPreviewDTO
     public string Description { get; set; }
     public decimal Price { get; set; }
     public string Category { get; set; }
+    public bool IsDeleted { get; set; }
     public byte[]? Image { get; set; }
     public Bitmap? DisplayImage { get; set; }
 }

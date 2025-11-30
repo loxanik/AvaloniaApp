@@ -16,7 +16,8 @@ public partial class UserProfileControlViewModel : ViewModelBase
     public PersonalInfo? PersonalInfo => User?.PersonalInfos.FirstOrDefault();
     public string LocalizedRole => _localizationHelper.LocalizateRole(User?.Role.Name);
     public string Patronymic => string.IsNullOrEmpty(PersonalInfo?.Patronymic) ? "не указано" : PersonalInfo.Patronymic;
-
+    public bool CanEdit => User?.Role.Name is "admin";
+    
     public UserProfileControlViewModel(IUserContext userContext, ILocalizationHelper localizationHelper)
     {
         _userContext = userContext;
@@ -25,10 +26,12 @@ public partial class UserProfileControlViewModel : ViewModelBase
         _userContext.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName != nameof(_userContext.CurrentUser)) return;
+            
             OnPropertyChanged(nameof(User));
             OnPropertyChanged(nameof(PersonalInfo));
             OnPropertyChanged(nameof(Patronymic));
             OnPropertyChanged(nameof(LocalizedRole));
+            OnPropertyChanged(nameof(CanEdit));
         };
     }
 
@@ -37,5 +40,11 @@ public partial class UserProfileControlViewModel : ViewModelBase
     {
         _userContext.UserLogout();
         WeakReferenceMessenger.Default.Send(new ChangeViewModelMessage(typeof(LoginControlViewModel)));
+    }
+
+    [RelayCommand]
+    private void OpenDeletedProducts()
+    {
+        WeakReferenceMessenger.Default.Send(new ChangeViewModelMessage(typeof(DeletedProductsListControlViewModel)));
     }
 }

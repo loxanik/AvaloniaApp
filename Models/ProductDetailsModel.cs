@@ -22,6 +22,7 @@ public partial class ProductDetailsModel : ObservableObject
         _price = _dto.Price;
         _producer = _dto.Producer;
         _country =  _dto.Country;
+        _isDeleted = _dto.IsDeleted;
 
         Parameters = _dto.Parameters != null
             ? new ObservableCollection<ParametersModel>(
@@ -55,6 +56,10 @@ public partial class ProductDetailsModel : ObservableObject
     private string _category;
     partial void OnCategoryChanged(string value) => _dto.Category = value;
     
+    [ObservableProperty]
+    private bool _isDeleted;
+    partial void OnIsDeletedChanged(bool value) => _dto.IsDeleted = value;
+    
     public byte[]? Image => _dto.Image;
     public Bitmap? DisplayImage => _dto.DisplayImage;
 
@@ -76,6 +81,7 @@ public partial class ProductDetailsModel : ObservableObject
                          Producer != original.Producer ||
                          Category != original.Category ||
                          Country != original.Country ||
+                         IsDeleted != original.IsDeleted ||
                          ParametersHasChanges(original.Parameters);
     
         return hasChanges;
