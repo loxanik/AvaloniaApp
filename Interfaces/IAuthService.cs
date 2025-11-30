@@ -1,5 +1,4 @@
 using System.Threading.Tasks;
-using Shop.Models;
 
 namespace Shop.Interfaces;
 

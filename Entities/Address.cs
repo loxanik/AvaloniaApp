@@ -1,7 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
-namespace Shop.Models;
+namespace Shop.Entities;
 
 public partial class Address
 {
@@ -13,5 +12,5 @@ public partial class Address
 
     public string Construction { get; set; } = null!;
 
-    public virtual ICollection<Shop> Shops { get; set; } = new List<Shop>();
+    public virtual ICollection<Entities.Shop> Shops { get; set; } = new List<Entities.Shop>();
 }

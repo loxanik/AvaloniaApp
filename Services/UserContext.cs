@@ -1,6 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using Shop.Entities;
 using Shop.Interfaces;
-using Shop.Models;
 
 namespace Shop.Services;
 

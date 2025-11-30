@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
-namespace Shop.Models;
+namespace Shop.Entities;
 
 public partial class ShopContext : DbContext
 {

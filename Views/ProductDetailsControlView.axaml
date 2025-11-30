@@ -152,9 +152,10 @@
                         BorderThickness="1"
                         Background="#F8F9FA"
                         Margin="10,30,15,15">
-                    <Grid>
+                    <Grid RowDefinitions="*, Auto">
                         <ScrollViewer Margin="10">
                             <ListBox ItemsSource="{Binding CurrentProductDetails.Parameters}"
+                                     SelectedItem="{Binding SelectedParameter}"
                                      Background="Transparent"
                                      BorderThickness="0">
                                 <ListBox.ItemTemplate>
@@ -190,6 +191,23 @@
                                 </ListBox.ItemTemplate>
                             </ListBox>
                         </ScrollViewer>
+                        <StackPanel Grid.Row="1"
+                                    Orientation="Horizontal"
+                                    Spacing="20"
+                                    Margin="5"
+                                    IsVisible="{Binding IsEditing}"
+                                    HorizontalAlignment="Center">
+                            
+                            <Button Content="Удалить"
+                                    IsEnabled="{Binding SelectedParameter, 
+                                    Converter={x:Static ObjectConverters.IsNotNull}}"
+                                    Command="{Binding RemoveParameterCommand}"
+                                    CommandParameter="{Binding SelectedParameter}"/>
+                            
+                            <Button Content="Добавить"
+                                    Command="{Binding AddParameterCommand}"/>
+                            
+                        </StackPanel>
                     </Grid>
                 </Border>
                 

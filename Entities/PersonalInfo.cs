@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace Shop.Models;
+﻿namespace Shop.Entities;
 
 public partial class PersonalInfo
 {

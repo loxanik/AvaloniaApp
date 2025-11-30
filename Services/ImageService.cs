@@ -5,8 +5,8 @@ using System.Linq;
 using Avalonia;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
+using Shop.Entities;
 using Shop.Interfaces;
-using Shop.Models;
 using Shop.Utils;
 
 namespace Shop.Services;

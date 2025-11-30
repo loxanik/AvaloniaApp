@@ -1,5 +1,5 @@
 using System.ComponentModel;
-using Shop.Models;
+using Shop.Entities;
 
 namespace Shop.Interfaces;
 

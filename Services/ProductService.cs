@@ -4,8 +4,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Shop.DTOs;
+using Shop.Entities;
 using Shop.Interfaces;
-using Shop.Models;
 using Shop.Utils;
 
 namespace Shop.Services;
@@ -164,27 +164,30 @@ public class ProductService : IProductService
     {
         try
         {
-            var product = await _shopContext.Products
+            var entity = await _shopContext.Products
                 .Include(p => p.Category)
                 .Include(p => p.Producer)
                     .ThenInclude(producer => producer.Country)
                 .Include(p => p.Parameters)
+                    .ThenInclude(p => p.Unit)
                 .Include(p => p.Image)
                 .Include(p => p.ShopProducts)
                     .ThenInclude(sp => sp.HistoryCosts)
                 .FirstOrDefaultAsync(p => p.Id == productDto.Id);
             
-            if (product == null) return;
+            if (entity == null) return;
             
-            product.Name = productDto.Name;
-            product.Description = productDto.Description;
-            product.Producer.Name = productDto.Producer;
-            product.Category.Name = productDto.Category;
-            product.Producer.Country.Name = productDto.Country;
+            entity.Name = productDto.Name;
+            entity.Description = productDto.Description;
+            entity.Producer.Name = productDto.Producer;
+            entity.Category.Name = productDto.Category;
+            entity.Producer.Country.Name = productDto.Country;
             
             //TODO сделать изменение фотографии
 
-            var shopProduct = product.ShopProducts.FirstOrDefault();
+            await UpdateParametersAsync(entity, productDto?.Parameters);
+            
+            var shopProduct = entity.ShopProducts.FirstOrDefault();
             if (shopProduct != null)
             {
                 var lastHistoryCost = shopProduct.HistoryCosts
@@ -198,16 +201,13 @@ public class ProductService : IProductService
                 {
                     var historyCost = new HistoryCost()
                     {
-                        Id = shopProduct.Id,
+                        ShopProductId = shopProduct.Id,
                         OldCost = oldCost,
                         NewCost = newCost,
                     };
                     
                     _shopContext.HistoryCosts.Add(historyCost);
                 }
-                
-                //TODO сделать обновление параметров
-                
             }
             
             await _shopContext.SaveChangesAsync();
@@ -215,6 +215,68 @@ public class ProductService : IProductService
         catch (Exception e)
         {
             AppLogger.LogError(e, $"Update product details error service: id: {productDto.Id}");
+        }
+    }
+    
+    private async Task UpdateParametersAsync(Product entity, List<ParametersDTO>? newParameters)
+    {
+        if (newParameters == null) 
+        {
+            // Если новые параметры null - удаляем все старые
+            _shopContext.Parameters.RemoveRange(entity.Parameters);
+            return;
+        }
+    
+        var existingParams = entity.Parameters.ToList();
+        
+        // 1. ОБНОВЛЯЕМ существующие параметры и УДАЛЯЕМ лишние
+        foreach (var existingParam in existingParams.ToList()) // ToList() для копии
+        {
+            var newParamDto = newParameters.FirstOrDefault(np => np.Id == existingParam.Id);
+            
+            if (newParamDto != null)
+            {
+                // ОБНОВЛЯЕМ существующий параметр
+                existingParam.Name = newParamDto.Name;
+                existingParam.Value = newParamDto.Value;
+                
+                // Обновляем Unit если нужно
+                if (existingParam.Unit.Name != newParamDto.Unit)
+                {
+                    var unit = await _shopContext.UnitOfMeasurements
+                        .FirstOrDefaultAsync(u => u.Name == newParamDto.Unit) 
+                        ?? new UnitOfMeasurement { Name = newParamDto.Unit };
+                    existingParam.Unit = unit;
+                }
+            }
+            else
+            {
+                // УДАЛЯЕМ параметр которого нет в новых данных
+                _shopContext.Parameters.Remove(existingParam);
+                existingParams.Remove(existingParam); // Убираем из локальной коллекции
+            }
+        }
+    
+        // 2. ДОБАВЛЯЕМ новые параметры (без Id или с Id = 0/null)
+        foreach (var newParamDto in newParameters)
+        {
+            // Если параметр новый (нет Id или Id = 0)
+            if (newParamDto.Id == null || newParamDto.Id == 0)
+            {
+                var unit = await _shopContext.UnitOfMeasurements
+                    .FirstOrDefaultAsync(u => u.Name == newParamDto.Unit) 
+                    ?? new UnitOfMeasurement { Name = newParamDto.Unit };
+    
+                var newParameter = new Parameter
+                {
+                    Name = newParamDto.Name,
+                    Value = newParamDto.Value,
+                    Unit = unit,
+                    Product = entity
+                };
+                
+                entity.Parameters.Add(newParameter);
+            }
         }
     }
 }

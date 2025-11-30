@@ -1,13 +1,16 @@
 using System;
+using System.Collections.Specialized;
 using System.ComponentModel;
-using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using MsBox.Avalonia;
+using MsBox.Avalonia.Enums;
 using Shop.DTOs;
 using Shop.Interfaces;
 using Shop.Messages;
+using Shop.Models;
 using Shop.Utils;
 
 namespace Shop.ViewModels;
@@ -18,14 +21,20 @@ public partial class ProductDetailsControlViewModel : ViewModelBase, IParameteri
     private readonly IUserContext _userContext;
     
     private int _productId;
-    private ProductDetailsDTO? _originalProduct;
-    private bool _isBusy;
+    private ProductDetailsModel? _originalProduct;
     
     public bool CanEdit => _userContext.CurrentUser?.Role.Name is "manager" or "admin";
-    public string SaveButtonText => _isBusy ? "Сохранение..." : "Сохранить";
-        
+    public string SaveButtonText => IsBusy ? "Сохранение..." : "Сохранить";
+    
     [ObservableProperty]
-    private ProductDetailsDTO? _currentProductDetails;
+    [NotifyPropertyChangedFor(nameof(SaveButtonText))]
+    private bool _isBusy;
+    
+    [ObservableProperty]
+    private ProductDetailsModel? _currentProductDetails;
+
+    [ObservableProperty]
+    private ParametersModel? _selectedParameter;
     
     [ObservableProperty]
     private bool _isEditing;
@@ -37,21 +46,30 @@ public partial class ProductDetailsControlViewModel : ViewModelBase, IParameteri
     {
         _productService = productService;
         _userContext = userContext;
-        
     }
     
     public void InitializeParam(object param)
     {
-        if (param is int productId)
-        {
-            _productId = productId;
-            Task.Run(async () => await LoadProductDetails());
-        }
+        if (param is not int productId) return;
+        
+        _productId = productId;
+        Task.Run(async () => await LoadProductDetails());
     }
 
     private async Task LoadProductDetails()
     {
-        CurrentProductDetails = await _productService.GetProductDetailsAsync(_productId);
+        try
+        {
+            var dto = await _productService.GetProductDetailsAsync(_productId);
+            
+            if (dto == null) return;
+            
+            CurrentProductDetails = new ProductDetailsModel(dto);
+        }
+        catch (Exception e)
+        {
+            AppLogger.LogError(e, $"Error on load product details viewmodel: id: {_productId} ");
+        }
     }
 
     [RelayCommand]
@@ -66,19 +84,59 @@ public partial class ProductDetailsControlViewModel : ViewModelBase, IParameteri
     [RelayCommand]
     public void BeginEdit()
     {
-        if (IsEditing) return;
+        if (IsEditing || CurrentProductDetails == null) return;
 
         _originalProduct = CloneProduct(CurrentProductDetails);
         IsEditing = true;
         HasChanges = false;
+        
+        CurrentProductDetails.PropertyChanged += OnProductPropertyChanged;
+
+        foreach (var parameter in CurrentProductDetails.Parameters)
+        {
+            parameter.PropertyChanged += OnProductPropertyChanged;
+        }
+        
+        CurrentProductDetails.Parameters.CollectionChanged += OnParametersCollectionChanged;
+    }
+
+    private void OnParametersCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (IsEditing && CurrentProductDetails != null && _originalProduct != null)
+        {
+            HasChanges = CurrentProductDetails.HasChanges(_originalProduct);
+        }
+    }
+
+    private void OnProductPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (IsEditing && CurrentProductDetails != null && _originalProduct != null)
+        {
+            HasChanges = CurrentProductDetails.HasChanges(_originalProduct);
+        }
     }
 
     [RelayCommand]
     public void CancelEdit()
     {
-        if (!IsEditing) return; 
+        if (!IsEditing || _originalProduct == null || CurrentProductDetails == null) return; 
         
-        CurrentProductDetails = CloneProduct(_originalProduct);
+        CurrentProductDetails.PropertyChanged -= OnProductPropertyChanged;
+
+        foreach (var parameter in CurrentProductDetails.Parameters)
+        {
+            parameter.PropertyChanged -= OnProductPropertyChanged;
+        }
+        
+        CurrentProductDetails.Parameters.CollectionChanged -= OnParametersCollectionChanged;
+        
+        CurrentProductDetails.Name = _originalProduct.Name;
+        CurrentProductDetails.Description = _originalProduct.Description;
+        CurrentProductDetails.Price = _originalProduct.Price;
+        CurrentProductDetails.Producer = _originalProduct.Producer;
+        CurrentProductDetails.Category = _originalProduct.Category;
+        CurrentProductDetails.Country = _originalProduct.Country;
+        
         IsEditing = false;
         HasChanges = false;
     }
@@ -86,66 +144,88 @@ public partial class ProductDetailsControlViewModel : ViewModelBase, IParameteri
     [RelayCommand]
     public void EndEdit()
     {
-       if (!IsEditing) return;
+       if (!IsEditing || CurrentProductDetails == null) return;
        
+       bool hasChanges = HasChanges;
+       
+       CurrentProductDetails.PropertyChanged -= OnProductPropertyChanged;
+
+       foreach (var parameter in CurrentProductDetails.Parameters)
+       {
+           parameter.PropertyChanged -= OnProductPropertyChanged;
+       }
+        
+       CurrentProductDetails.Parameters.CollectionChanged -= OnParametersCollectionChanged;
+
        IsEditing = false;
        HasChanges = false;
 
-       _ = UpdateProductDetails();
+       _ = UpdateProductDetails(hasChanges);
     }
 
-    private async Task UpdateProductDetails()
+    private async Task UpdateProductDetails(bool hasChanges)
     {
+        IsBusy = true;
+
         try
         {
             //TODO сделать проверку на HasChanges
-            if (CurrentProductDetails != null)
+            if (CurrentProductDetails != null && hasChanges)
             {
-                await _productService.UpdateProductDetailsAsync(CurrentProductDetails);
-                CurrentProductDetails = await _productService.GetProductDetailsAsync(_productId);
+                await _productService.UpdateProductDetailsAsync(CurrentProductDetails.ToDto());
+
+                var msg = MessageBoxManager.GetMessageBoxStandard("Сохранение",
+                    "Изменения успешно сохранены.",
+                    icon: Icon.Info);
+                await msg.ShowAsync();
+            }
+            else
+            {
+                var msg = MessageBoxManager.GetMessageBoxStandard("Сохранение",
+                    "Изменения не были обнаружены.",
+                    icon: Icon.Info);
+                await msg.ShowAsync();
             }
         }
         catch (Exception e)
         {
-            AppLogger.LogError(e, $"Error saving product viewmodel: id:{_currentProductDetails.Id}");
+            AppLogger.LogError(e, $"Error saving product viewmodel: id:{CurrentProductDetails?.Id}");
+            var msg = MessageBoxManager.GetMessageBoxStandard("Сохранение",
+                "Произошла ошибка сохранения." +
+                "\nИзменения не были сохранены.",
+                icon: Icon.Error);
+            await msg.ShowAsync();
+        }
+        finally
+        {
+            await LoadProductDetails();
+            IsBusy = false;
         }
     }
-    
-    partial void OnCurrentProductDetailsChanged(ProductDetailsDTO? value)
+
+    [RelayCommand]
+    private void AddParameter()
     {
-        //TODO сделать отдельную модель продукта с полным покрытием propertyChanged
-        if (IsEditing && _originalProduct != null)
-            HasChanges = !IsProductsEqual(value, _originalProduct);
-    }
-    
-    private ProductDetailsDTO CloneProduct(ProductDetailsDTO product)
-    {
-        return new ProductDetailsDTO()
+        if (CurrentProductDetails == null) return;
+        
+        CurrentProductDetails.Parameters.Add(new ParametersModel(new ParametersDTO()
         {
-            Description = product.Description,
-            Price = product.Price,
-            Producer = product.Producer,
-            Category = product.Category,
-            Image = product.Image,
-            Id = product.Id,
-            Name = product.Name,
-            DisplayImage = product.DisplayImage,
-            Parameters = product.Parameters?.Select(p => new ParametersDTO()
-            {
-                Id = p.Id,
-                Name = p.Name,
-                Value = p.Value,
-                Unit = p.Unit
-            }).ToList()
-        };
+            Name = "Новый параметр",
+            Value = "Значение",
+            Unit = "Единица"
+        }));
     }
 
-    private bool IsProductsEqual(ProductDetailsDTO a, ProductDetailsDTO b)
+    [RelayCommand]
+    private void RemoveParameter(ParametersModel parameter)
     {
-        return a.Name == b.Name
-               && a.Price == b.Price
-               && a.Producer == b.Producer
-               && a.Category == b.Category
-               && a.Description == b.Description;
+        if (CurrentProductDetails == null) return;
+
+        CurrentProductDetails.Parameters.Remove(parameter);
+    }
+    
+    private ProductDetailsModel CloneProduct(ProductDetailsModel product)
+    {
+        return new ProductDetailsModel(product.ToDto());
     }
 }

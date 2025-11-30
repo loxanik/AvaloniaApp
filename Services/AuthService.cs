@@ -2,8 +2,8 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Shop.Entities;
 using Shop.Interfaces;
-using Shop.Models;
 using Shop.Utils;
 
 namespace Shop.Services;

@@ -9,9 +9,9 @@ using Microsoft.EntityFrameworkCore;
 using Shop.ViewModels;
 using Shop.Views;
 using Microsoft.Extensions.DependencyInjection;
+using Shop.Entities;
 using Shop.Helpers;
 using Shop.Interfaces;
-using Shop.Models;
 using Shop.Services;
 
 namespace Shop;
