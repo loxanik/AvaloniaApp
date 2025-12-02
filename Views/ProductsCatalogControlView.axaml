@@ -48,12 +48,10 @@
                         
                         <ComboBox ItemsSource="{Binding Producers}"
                                   SelectedItem="{Binding SelectedProducer}"
-                                  DisplayMemberBinding="{Binding Name}"
                                   CornerRadius="10"/>
                         
                         <ComboBox ItemsSource="{Binding Categories}"
                                   SelectedItem="{Binding SelectedCategory}"
-                                  DisplayMemberBinding="{Binding Name}"
                                   CornerRadius="10"/>
                         
                         <Button Background="Transparent"

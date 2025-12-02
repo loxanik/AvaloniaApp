@@ -74,30 +74,33 @@
                             </Grid>
                             
                             <Grid Grid.Row="1" Grid.Column="1">
-                                <TextBox BorderThickness="0"
-                                         Padding="5 0"
-                                         IsVisible="{Binding IsEditing}"
-                                         Text="{Binding CurrentProductDetails.Category}"/>
+                                <ComboBox IsVisible="{Binding IsEditing}"
+                                          ItemsSource="{Binding CategoryList}"
+                                          SelectedItem="{Binding SelectedCategory}"
+                                          BorderThickness="0"
+                                          Padding="5 -10 0 0"/>
                                 
                                 <TextBlock IsVisible="{Binding !IsEditing}"
                                            Text="{Binding CurrentProductDetails.Category}"/>
                             </Grid>
                             
                             <Grid Grid.Row="2" Grid.Column="1">
-                                <TextBox BorderThickness="0"
-                                         Padding="5 0"
-                                         IsVisible="{Binding IsEditing}"
-                                         Text="{Binding CurrentProductDetails.Producer}"/>
+                                <ComboBox IsVisible="{Binding IsEditing}"
+                                          ItemsSource="{Binding ProducerList}"
+                                          SelectedItem="{Binding SelectedProducer}"
+                                          BorderThickness="0"
+                                          Padding="5 -10 0 0"/>
                                 
                                 <TextBlock IsVisible="{Binding !IsEditing}"
                                            Text="{Binding CurrentProductDetails.Producer}"/>
                             </Grid>
                             
                             <Grid Grid.Row="3" Grid.Column="1">
-                                <TextBox BorderThickness="0"
-                                         Padding="5 0"
-                                         IsVisible="{Binding IsEditing}"
-                                         Text="{Binding CurrentProductDetails.Country}"/>
+                                <ComboBox IsVisible="{Binding IsEditing}"
+                                          ItemsSource="{Binding CountryList}"
+                                          SelectedItem="{Binding SelectedCountry}"
+                                          BorderThickness="0"
+                                          Padding="5 -10 0 0"/>
                                 
                                 <TextBlock IsVisible="{Binding !IsEditing}"
                                            Text="{Binding CurrentProductDetails.Country}"/>
@@ -228,11 +231,15 @@
                                                             Spacing="1"
                                                             IsVisible="{Binding #RootControl.DataContext.IsEditing}">
                                                     <TextBox Text="{Binding Name}"
-                                                             BorderThickness="0"/>
+                                                             BorderThickness="0"
+                                                             Padding="5 0"/>
                                                     <TextBox Text="{Binding Value}"
-                                                             BorderThickness="0"/>
-                                                    <TextBox Text="{Binding Unit}"
-                                                             BorderThickness="0"/>
+                                                             BorderThickness="0"
+                                                             Padding="5 0"/>
+                                                    <ComboBox ItemsSource="{Binding #RootControl.DataContext.UnitList}"
+                                                              SelectedItem="{Binding Unit}"
+                                                              BorderThickness="0"
+                                                              Padding="5 -10 0 0"/>
                                                 </StackPanel>
                                                 
                                             </Grid>

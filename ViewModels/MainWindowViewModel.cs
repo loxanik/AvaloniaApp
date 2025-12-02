@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Threading.Tasks;
 using Avalonia.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.DependencyInjection;
@@ -54,21 +55,35 @@ public partial class MainWindowViewModel : ViewModelBase
         UpdateActiveStates();
 
         PropertyChanged += OnPropertyChanged;
+
+        WeakReferenceMessenger.Default.Register<ChangeViewModelMessage>(this, OnViewModelChanged);
+
         
-        WeakReferenceMessenger.Default.Register<ChangeViewModelMessage>(this, (_, message) =>
+        _userContext.PropertyChanged += userContextOnPropertyChanged;
+    }
+
+    private void OnViewModelChanged(object recipient, ChangeViewModelMessage message)
+    {
+        _ = ChangeViewModelAsync(message);
+    }
+    private async Task ChangeViewModelAsync(ChangeViewModelMessage message)
+    {
+        try
         {
             var viewModel = Ioc.Default.GetRequiredService(message.ViewModelType);
 
             if (message.Parameter != null && viewModel is IParameterized parameterized)
             {
-                parameterized.InitializeParam(message.Parameter);
+                await parameterized.InitializeParam(message.Parameter);
             }
             
             CurrentViewModel = viewModel;
             SyncView();
-        });
-        
-        _userContext.PropertyChanged += userContextOnPropertyChanged;
+        }
+        catch (Exception e)
+        {
+            AppLogger.LogError(e, $"Error in ChangeViewModelAsync: {message.ViewModelType.FullName}");
+        }
     }
 
     private async void userContextOnPropertyChanged(object? sender, PropertyChangedEventArgs e)

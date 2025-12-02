@@ -1,6 +1,8 @@
+using System.Threading.Tasks;
+
 namespace Shop.Interfaces;
 
 public interface IParameterized
 {
-    void InitializeParam(object param);
+    Task InitializeParam(object param);
 }

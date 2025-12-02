@@ -112,18 +112,15 @@ public class ProductService : IProductService
         }
     }
 
-    public async Task<List<CategoryDTO>?> GetCategoriesAsync()
+    public async Task<List<string>?> GetCategoriesAsync()
     {
         try
         {
             var categories = await _shopContext.Categories
                 .AsNoTracking()
                 .OrderBy(c => c.Name)
-                .Select(c => new CategoryDTO
-                {
-                    Id = c.Id,
-                    Name = c.Name
-                }).ToListAsync();
+                .Select(c => c.Name)
+                .ToListAsync();
             
             return categories;
         }
@@ -134,24 +131,59 @@ public class ProductService : IProductService
         }
     }
 
-    public async Task<List<ProducerDTO>?> GetProducersAsync()
+    public async Task<List<string>?> GetProducersAsync()
     {
         try
         {
             var producers = await _shopContext.Producers
                 .AsNoTracking()
                 .OrderBy(c => c.Name)
-                .Select(c => new ProducerDTO
-                {
-                    Id = c.Id,
-                    Name = c.Name
-                }).ToListAsync();
+                .Select(c => c.Name)
+                .ToListAsync();
             
             return producers;
         }
         catch (Exception e)
         {
             AppLogger.LogError(e, $"Get producers error");
+            return null;
+        }
+    }
+
+    public async Task<List<string>?> GetCountriesAsync()
+    {
+        try
+        {
+            var countries = await _shopContext.Countries
+                .AsNoTracking()
+                .OrderBy(c => c.Name)
+                .Select(c => c.Name)
+                .ToListAsync();
+            
+            return countries;
+        }
+        catch (Exception e)
+        {
+            AppLogger.LogError(e, $"Get countries error");
+            return null;
+        }
+    }
+
+    public async Task<List<string>?> GetUnitsAsync()
+    {
+        try
+        {
+            var units = await _shopContext.UnitOfMeasurements
+                .AsNoTracking()
+                .OrderBy(c => c.Name)
+                .Select(c => c.Name)
+                .ToListAsync();
+            
+            return units;
+        }
+        catch (Exception e)
+        {
+            AppLogger.LogError(e, $"Get units error");
             return null;
         }
     }
@@ -192,7 +224,7 @@ public class ProductService : IProductService
                             Unit = param.Unit.Name
                         }).ToList(),
                     IsDeleted = p.IsDeleted,
-                    Count = p.ShopProducts.FirstOrDefault().Count
+                    Count = p.ShopProducts.FirstOrDefault()!.Count
                 }).FirstOrDefaultAsync();
 
             if (product != null)
@@ -211,6 +243,8 @@ public class ProductService : IProductService
 
     public async Task UpdateProductDetailsAsync(ProductDetailsDTO productDto)
     {
+        await using var transaction = await _shopContext.Database.BeginTransactionAsync();
+        
         try
         {
             var entity = await _shopContext.Products
@@ -228,10 +262,25 @@ public class ProductService : IProductService
             
             entity.Name = productDto.Name;
             entity.Description = productDto.Description;
-            entity.Producer.Name = productDto.Producer;
-            entity.Category.Name = productDto.Category;
-            entity.Producer.Country.Name = productDto.Country;
             entity.IsDeleted = productDto.IsDeleted;
+
+            var newCategory = await FindOrCreateCategoryAsync(productDto.Category);
+            if (entity.Category.Id != newCategory.Id)
+            {
+                entity.Category = newCategory;
+            }
+            
+            var newCountry = await FindOrCreateCountryAsync(productDto.Country);
+        
+            var newProducer = await FindOrCreateProducerAsync(productDto.Producer, newCountry);
+            if (entity.Producer.Id != newProducer.Id)
+            {
+                entity.Producer = newProducer;
+            }
+            else if (entity.Producer.Country.Id != newCountry.Id)
+            {
+                entity.Producer.Country = newCountry;
+            }
             
             //TODO сделать изменение фотографии
 
@@ -250,7 +299,7 @@ public class ProductService : IProductService
                 decimal oldCost = lastHistoryCost?.NewCost ?? 0;
                 decimal newCost = productDto?.Price ?? oldCost;
 
-                if (newCost != oldCost)
+                if (Math.Abs(newCost - oldCost) > 0.01m)
                 {
                     var historyCost = new HistoryCost()
                     {
@@ -264,6 +313,7 @@ public class ProductService : IProductService
             }
             
             await _shopContext.SaveChangesAsync();
+            await transaction.CommitAsync();
         }
         catch (Exception e)
         {
@@ -533,28 +583,38 @@ public class ProductService : IProductService
     {
         if (string.IsNullOrWhiteSpace(producerName))
             throw new ArgumentException("Producer name cannot be empty");
-        
+    
+        // Ищем производителя с указанной страной
         var producer = await _shopContext.Producers
             .Include(p => p.Country)
-            .FirstOrDefaultAsync(p => p.Name == producerName);
-        
+            .FirstOrDefaultAsync(p => p.Name == producerName && p.Country.Id == country.Id);
+    
         if (producer == null)
         {
-            producer = new Producer
-            {
-                Name = producerName,
-                Country = country
-            };
-            await _shopContext.Producers.AddAsync(producer);
-            await _shopContext.SaveChangesAsync();
-        }
-        else if (producer.Country.Name != country.Name)
-        {
-            // Если производитель найден, но страна отличается - обновляем страну
-            producer.Country = country;
-            await _shopContext.SaveChangesAsync();
-        }
+            // Ищем производителя только по имени (без учета страны)
+            producer = await _shopContext.Producers
+                .Include(p => p.Country)
+                .FirstOrDefaultAsync(p => p.Name == producerName);
         
+            if (producer != null)
+            {
+                // Производитель найден, но страна другая - обновляем страну
+                producer.Country = country;
+                await _shopContext.SaveChangesAsync();
+            }
+            else
+            {
+                // Создаем нового производителя
+                producer = new Producer
+                {
+                    Name = producerName,
+                    Country = country
+                };
+                await _shopContext.Producers.AddAsync(producer);
+                await _shopContext.SaveChangesAsync();
+            }
+        }
+    
         return producer;
     }
     

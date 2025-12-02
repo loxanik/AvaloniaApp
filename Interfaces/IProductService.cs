@@ -15,8 +15,10 @@ public interface IProductService
         string? sortBy = null,
         decimal? priceFrom = null,
         decimal? priceTo = null);
-    Task<List<CategoryDTO>?> GetCategoriesAsync();
-    Task<List<ProducerDTO>?> GetProducersAsync();
+    Task<List<string>?> GetCategoriesAsync();
+    Task<List<string>?> GetProducersAsync();
+    Task<List<string>?> GetCountriesAsync();
+    Task<List<string>?> GetUnitsAsync();
     Task<ProductDetailsDTO?> GetProductDetailsAsync(int id, bool includeDeleted);
     Task UpdateProductDetailsAsync(ProductDetailsDTO product);
     Task<bool> SoftDeleteProductAsync(int id);

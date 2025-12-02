@@ -21,10 +21,10 @@ public partial class ProductsCatalogControlViewModel : ViewModelBase
     private ObservableCollection<ProductPreviewDTO>? _products = [];
     
     [ObservableProperty]
-    private ObservableCollection<CategoryDTO>? _categories = [];
+    private ObservableCollection<string>? _categories = [];
     
     [ObservableProperty]
-    private ObservableCollection<ProducerDTO>? _producers = [];
+    private ObservableCollection<string>? _producers = [];
     
     [ObservableProperty]
     private ObservableCollection<string>? _sortBy;
@@ -48,10 +48,10 @@ public partial class ProductsCatalogControlViewModel : ViewModelBase
     private int _totalPages;
     
     [ObservableProperty]
-    private CategoryDTO? _selectedCategory;
+    private string? _selectedCategory;
     
     [ObservableProperty]
-    private ProducerDTO? _selectedProducer;
+    private string? _selectedProducer;
     
     [ObservableProperty]
     private string? _searchText;
@@ -79,11 +79,11 @@ public partial class ProductsCatalogControlViewModel : ViewModelBase
         {
             string? producer = null, category = null;
             
-            if (SelectedCategory?.Id != 0)
-                category = SelectedCategory?.Name;
+            if (SelectedCategory != "Все категории")
+                category = SelectedCategory;
             
-            if (SelectedProducer?.Id != 0)
-                producer = SelectedProducer?.Name;
+            if (SelectedProducer != "Все производители")
+                producer = SelectedProducer;
             
             Products?.Clear();
         
@@ -146,15 +146,14 @@ public partial class ProductsCatalogControlViewModel : ViewModelBase
         {
             Categories?.Clear();
         
-        
             var categories = await _productService.GetCategoriesAsync();
 
             if (categories != null)
             {
-                Categories = new ObservableCollection<CategoryDTO>(categories);
+                Categories = new ObservableCollection<string>(categories);
             }
 
-            Categories?.Insert(0, new CategoryDTO() {Id = 0, Name = "Все категории"});
+            Categories?.Insert(0, "Все категории");
             
             SelectedCategory = Categories?[0];
         }
@@ -176,10 +175,10 @@ public partial class ProductsCatalogControlViewModel : ViewModelBase
 
             if (producers != null)
             {
-                Producers = new ObservableCollection<ProducerDTO>(producers);
+                Producers = new ObservableCollection<string>(producers);
             }
             
-            Producers?.Insert(0,new ProducerDTO() { Id = 0, Name = "Все производители" });
+            Producers?.Insert(0,"Все производители");
 
             SelectedProducer = Producers?[0];
         }
