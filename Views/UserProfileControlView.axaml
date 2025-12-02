@@ -78,6 +78,19 @@
             <Button  Margin="20"
                      CornerRadius="20"
                      MinHeight="30"
+                     Command="{Binding AddNewProductCommand}"
+                     IsVisible="{Binding CanAdd}">
+                
+                <StackPanel Orientation="Horizontal" Spacing="2">
+                    <materialsIcon:MaterialIcon Kind="ViewGridAdd"/>
+                    <TextBlock Text="Добавить товар"/>
+                </StackPanel>
+            
+            </Button>
+            
+            <Button  Margin="20"
+                     CornerRadius="20"
+                     MinHeight="30"
                      Command="{Binding OpenDeletedProductsCommand}"
                      IsVisible="{Binding CanEdit}">
                 

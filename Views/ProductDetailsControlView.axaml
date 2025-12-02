@@ -51,7 +51,7 @@
                             Background="#F8F9FA"
                             Margin="15,0,15,15"
                             Padding="15">
-                        <Grid RowDefinitions="*,*,*,*,*,*,Auto"
+                        <Grid RowDefinitions="*,*,*,*,*,*,*,Auto"
                               ColumnDefinitions="Auto,*"
                               Margin="5">
                             
@@ -60,7 +60,8 @@
                             <TextBlock Grid.Row="2" Text="Производитель:" Margin="0 0 10 0"/>
                             <TextBlock Grid.Row="3" Text="Страна:" Margin="0 0 10 0"/>
                             <TextBlock Grid.Row="4" Text="Описание:" Margin="0 0 10 0"/>
-                            <TextBlock Grid.Row="5" FontWeight="SemiBold" Text="Цена:" Margin="0 0 10 0"/>
+                            <TextBlock Grid.Row="5" Text="Количество:" Margin="0 0 10 0"/>
+                            <TextBlock Grid.Row="6" FontWeight="SemiBold" Text="Цена:" Margin="0 0 10 0"/>
                             
                             <Grid Grid.Column="1">
                                 <TextBox BorderThickness="0"
@@ -111,7 +112,18 @@
                                 <TextBlock IsVisible="{Binding !IsEditing}"
                                            Text="{Binding CurrentProductDetails.Description}"/>
                             </Grid>
-                            <TextBlock FontWeight="SemiBold" Grid.Column="1" Grid.Row="5">
+                            
+                            <Grid Grid.Row="5" Grid.Column="1">
+                                <TextBox BorderThickness="0"
+                                         Padding="5 0"
+                                         IsVisible="{Binding IsEditing}"
+                                         Text="{Binding CurrentProductDetails.Count}"/>
+                                
+                                <TextBlock IsVisible="{Binding !IsEditing}"
+                                           Text="{Binding CurrentProductDetails.Count}"/>
+                            </Grid>
+                            
+                            <TextBlock FontWeight="SemiBold" Grid.Column="1" Grid.Row="6">
                                 <TextBlock Text="{Binding CurrentProductDetails.Price}"
                                          IsVisible="{Binding !IsEditing}"/>
                                 
@@ -123,7 +135,7 @@
                             </TextBlock>
                             
                             <StackPanel Orientation="Horizontal"
-                                        Grid.Row="6"
+                                        Grid.Row="7"
                                         Grid.ColumnSpan="2"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"

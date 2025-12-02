@@ -21,7 +21,15 @@ public class ProductService : IProductService
         _imageService = imageService;
     }
     
-    public async Task<PagedResult<ProductPreviewDTO>?> GetProductsPagedAsync(int pageNumber, int pageSize)
+    public async Task<PagedResult<ProductPreviewDTO>?> GetProductsPagedAsync(
+        int pageNumber,
+        int pageSize,
+        string? search = null,
+        string? category = null,
+        string? producer = null,
+        string? sortBy = null,
+        decimal? priceFrom = null,
+        decimal? priceTo = null)
     {
         try
         {
@@ -29,28 +37,59 @@ public class ProductService : IProductService
                 .Where(p => !p.IsDeleted)
                 .AsNoTracking()
                 .Include(p => p.Category)
+                .Include(p => p.Image)
+                .Include(p => p.Producer)
+                .Include(p => p.ShopProducts)
+                    .ThenInclude(sp => sp.HistoryCosts)
                 .AsQueryable();
             
-            var totalCount = await query.CountAsync();
+            if (!string.IsNullOrWhiteSpace(search))
+                query = query.Where(p => p.Name.Contains(search));
             
-            var pagedQuery = query.
-                OrderBy(p => p.Category.Name)
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize);
+            if (!string.IsNullOrWhiteSpace(category))
+                query = query.Where(p => p.Category.Name == category);
+            
+            if (!string.IsNullOrWhiteSpace(producer))
+                query = query.Where(p => p.Producer.Name == producer);
 
-            var items = await pagedQuery
-                .Select(p => new ProductPreviewDTO
+            var queryWithPrice = query.Select(p => new
+            {
+                Product = p,
+                Price = p.ShopProducts
+                    .SelectMany(sp => sp.HistoryCosts)
+                    .OrderByDescending(ph => ph.Id)
+                    .Select(ph => ph.NewCost)
+                    .FirstOrDefault()
+            });
+            
+            if (priceFrom.HasValue)
+                queryWithPrice = queryWithPrice.Where(p => p.Price >= priceFrom);
+            
+            if (priceTo.HasValue)
+                queryWithPrice = queryWithPrice.Where(p => p.Price <= priceTo);
+            
+            queryWithPrice = sortBy switch
+            {
+                "По возрастанию цены" => queryWithPrice.OrderBy(x => x.Price),
+                "По убыванию цены" => queryWithPrice.OrderByDescending(x => x.Price),
+                "По убыванию имени" => queryWithPrice.OrderByDescending(x => x.Product.Name),
+                _ => queryWithPrice.OrderBy(x => x.Product.Name),
+            };
+            
+            var totalCount = await queryWithPrice.CountAsync();
+            
+            var items =  await queryWithPrice
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .Select(x => new ProductPreviewDTO
                 {
-                    Id = p.Id,
-                    Name = p.Name,
-                    Category = p.Category.Name,
-                    Description = p.Description,
-                    Image = p.Image.Image1,
-                    Price = p.ShopProducts
-                        .SelectMany(sp => sp.HistoryCosts)
-                        .OrderByDescending(sp => sp.Id)
-                        .Select(sp => sp.NewCost)
-                        .FirstOrDefault()
+                    Id = x.Product.Id,
+                    Name = x.Product.Name,
+                    Category = x.Product.Category.Name,
+                    Producer = x.Product.Producer.Name,
+                    Description = x.Product.Description,
+                    Image = x.Product.Image.Image1,
+                    Price = x.Price
                 }).ToListAsync();
 
             foreach (var product in items)
@@ -152,7 +191,8 @@ public class ProductService : IProductService
                             Value = param.Value,
                             Unit = param.Unit.Name
                         }).ToList(),
-                    IsDeleted = p.IsDeleted
+                    IsDeleted = p.IsDeleted,
+                    Count = p.ShopProducts.FirstOrDefault().Count
                 }).FirstOrDefaultAsync();
 
             if (product != null)
@@ -198,8 +238,11 @@ public class ProductService : IProductService
             await UpdateParametersAsync(entity, productDto?.Parameters);
             
             var shopProduct = entity.ShopProducts.FirstOrDefault();
+            
             if (shopProduct != null)
             {
+                shopProduct.Count = productDto.Count;
+                
                 var lastHistoryCost = shopProduct.HistoryCosts
                     .OrderByDescending(sp => sp.Id)
                     .FirstOrDefault();
@@ -366,6 +409,182 @@ public class ProductService : IProductService
             AppLogger.LogError(ex, "Error getting deleted products");
             return null;
         }
+    }
+
+    public async Task<int> CreateProductAsync(ProductDetailsDTO productDto)
+    {
+         try
+         {
+             await using var transaction = await _shopContext.Database.BeginTransactionAsync();
+            
+             // 1. Находим или создаем категорию
+             var category = await FindOrCreateCategoryAsync(productDto.Category);
+            
+             // 2. Находим или создаем страну
+             var country = await FindOrCreateCountryAsync(productDto.Country);
+            
+             // 3. Находим или создаем производителя
+             var producer = await FindOrCreateProducerAsync(productDto.Producer, country);
+            
+             // 4. Создаем изображение (если есть)
+             Image? image = null;
+             if (productDto.Image != null && productDto.Image.Length > 0)
+             {
+                 image = new Image { Image1 = productDto.Image };
+                 await _shopContext.Images.AddAsync(image);
+                 await _shopContext.SaveChangesAsync();
+             }
+            
+             // 5. Создаем продукт
+             var product = new Product
+             {
+                 Name = productDto.Name,
+                 Description = productDto.Description,
+                 Category = category,
+                 Producer = producer,
+                 Image = image,
+                 IsDeleted = false,
+                 Parameters = new List<Parameter>()
+             };
+            
+             await _shopContext.Products.AddAsync(product);
+             await _shopContext.SaveChangesAsync();
+            
+             // 6. Создаем ShopProduct с начальной стоимостью
+             var shopProduct = new ShopProduct
+             {
+                 ProductId = product.Id,
+                 Count = productDto.Count,
+                 DateOfManufacture = DateOnly.FromDateTime(DateTime.Now),
+                 HistoryCosts = new List<HistoryCost>()
+             };
+            
+             await _shopContext.ShopProducts.AddAsync(shopProduct);
+             await _shopContext.SaveChangesAsync();
+            
+             // 7. Добавляем начальную стоимость
+             if (productDto.Price > 0)
+             {
+                 var historyCost = new HistoryCost
+                 {
+                     ShopProductId = shopProduct.Id,
+                     OldCost = 0,
+                     NewCost = productDto.Price
+                 };
+                
+                 await _shopContext.HistoryCosts.AddAsync(historyCost);
+                 await _shopContext.SaveChangesAsync();
+             }
+            
+             // 8. Добавляем параметры
+             if (productDto.Parameters != null && productDto.Parameters.Any())
+             {
+                 await AddParametersToProductAsync(product, productDto.Parameters);
+             }
+            
+             await transaction.CommitAsync();
+            
+             return product.Id;
+         }
+         catch (Exception ex)
+         {
+             AppLogger.LogError(ex, "Error creating product");
+             return 0;
+         }
+    }
+    
+    private async Task<Category> FindOrCreateCategoryAsync(string categoryName)
+    {
+        if (string.IsNullOrWhiteSpace(categoryName))
+            throw new ArgumentException("Category name cannot be empty");
+        
+        var category = await _shopContext.Categories
+            .FirstOrDefaultAsync(c => c.Name == categoryName);
+        
+        if (category == null)
+        {
+            category = new Category { Name = categoryName };
+            await _shopContext.Categories.AddAsync(category);
+            await _shopContext.SaveChangesAsync();
+        }
+        
+        return category;
+    }
+    
+    private async Task<Country> FindOrCreateCountryAsync(string countryName)
+    {
+        if (string.IsNullOrWhiteSpace(countryName))
+            throw new ArgumentException("Country name cannot be empty");
+        
+        var country = await _shopContext.Countries
+            .FirstOrDefaultAsync(c => c.Name == countryName);
+        
+        if (country == null)
+        {
+            country = new Country { Name = countryName };
+            await _shopContext.Countries.AddAsync(country);
+            await _shopContext.SaveChangesAsync();
+        }
+        
+        return country;
+    }
+    
+    private async Task<Producer> FindOrCreateProducerAsync(string producerName, Country country)
+    {
+        if (string.IsNullOrWhiteSpace(producerName))
+            throw new ArgumentException("Producer name cannot be empty");
+        
+        var producer = await _shopContext.Producers
+            .Include(p => p.Country)
+            .FirstOrDefaultAsync(p => p.Name == producerName);
+        
+        if (producer == null)
+        {
+            producer = new Producer
+            {
+                Name = producerName,
+                Country = country
+            };
+            await _shopContext.Producers.AddAsync(producer);
+            await _shopContext.SaveChangesAsync();
+        }
+        else if (producer.Country.Name != country.Name)
+        {
+            // Если производитель найден, но страна отличается - обновляем страну
+            producer.Country = country;
+            await _shopContext.SaveChangesAsync();
+        }
+        
+        return producer;
+    }
+    
+    private async Task AddParametersToProductAsync(Product product, List<ParametersDTO> parameters)
+    {
+        foreach (var paramDto in parameters)
+        {
+            // Находим или создаем единицу измерения
+            var unit = await _shopContext.UnitOfMeasurements
+                .FirstOrDefaultAsync(u => u.Name == paramDto.Unit);
+            
+            if (unit == null)
+            {
+                unit = new UnitOfMeasurement { Name = paramDto.Unit };
+                await _shopContext.UnitOfMeasurements.AddAsync(unit);
+                await _shopContext.SaveChangesAsync();
+            }
+            
+            var parameter = new Parameter
+            {
+                Name = paramDto.Name,
+                Value = paramDto.Value,
+                Unit = unit,
+                Product = product
+            };
+            
+            await _shopContext.Parameters.AddAsync(parameter);
+        }
+        
+        await _shopContext.SaveChangesAsync();
     }
 
     private async Task UpdateParametersAsync(Product entity, List<ParametersDTO>? newParameters)

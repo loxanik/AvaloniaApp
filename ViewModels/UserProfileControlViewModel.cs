@@ -17,6 +17,7 @@ public partial class UserProfileControlViewModel : ViewModelBase
     public string LocalizedRole => _localizationHelper.LocalizateRole(User?.Role.Name);
     public string Patronymic => string.IsNullOrEmpty(PersonalInfo?.Patronymic) ? "не указано" : PersonalInfo.Patronymic;
     public bool CanEdit => User?.Role.Name is "admin";
+    public bool CanAdd => User?.Role.Name is "manager" or "admin";
     
     public UserProfileControlViewModel(IUserContext userContext, ILocalizationHelper localizationHelper)
     {
@@ -32,6 +33,7 @@ public partial class UserProfileControlViewModel : ViewModelBase
             OnPropertyChanged(nameof(Patronymic));
             OnPropertyChanged(nameof(LocalizedRole));
             OnPropertyChanged(nameof(CanEdit));
+            OnPropertyChanged(nameof(CanAdd));
         };
     }
 
@@ -46,5 +48,11 @@ public partial class UserProfileControlViewModel : ViewModelBase
     private void OpenDeletedProducts()
     {
         WeakReferenceMessenger.Default.Send(new ChangeViewModelMessage(typeof(DeletedProductsListControlViewModel)));
+    }
+
+    [RelayCommand]
+    private void AddNewProduct()
+    {
+        WeakReferenceMessenger.Default.Send(new ChangeViewModelMessage(typeof(ProductDetailsControlViewModel), 0));
     }
 }

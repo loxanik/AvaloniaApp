@@ -26,26 +26,36 @@
                              Watermark="Поиск..."
                              VerticalContentAlignment="Center"
                              Height="30"
-                             CornerRadius="10"/>
+                             CornerRadius="10"
+                             Text="{Binding SearchText}"/>
                     
                     <StackPanel Grid.Column="1"
                                 Orientation="Horizontal"
                                 Spacing="10"
                                 VerticalAlignment="Center">
                         
-                        <ComboBox CornerRadius="10"/>
+                        <ComboBox CornerRadius="10"
+                                  ItemsSource="{Binding SortBy}"
+                                  SelectedItem="{Binding SelectedSortBy}"/>
+                        
                         <TextBox CornerRadius="10"
-                                 Watermark="от"/>
+                                 Watermark="от"
+                                 Text="{Binding PriceFrom}"/>
+                        
                         <TextBox CornerRadius="10"
-                                 Watermark="до"/>
+                                 Watermark="до"
+                                 Text="{Binding PriceTo}"/>
+                        
                         <ComboBox ItemsSource="{Binding Producers}"
                                   SelectedItem="{Binding SelectedProducer}"
                                   DisplayMemberBinding="{Binding Name}"
                                   CornerRadius="10"/>
+                        
                         <ComboBox ItemsSource="{Binding Categories}"
                                   SelectedItem="{Binding SelectedCategory}"
                                   DisplayMemberBinding="{Binding Name}"
                                   CornerRadius="10"/>
+                        
                         <Button Background="Transparent"
                                 Command="{Binding GetProductsCommand}"
                                 ToolTip.Tip="Обновить каталог"

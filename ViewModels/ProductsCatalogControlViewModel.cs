@@ -27,6 +27,9 @@ public partial class ProductsCatalogControlViewModel : ViewModelBase
     private ObservableCollection<ProducerDTO>? _producers = [];
     
     [ObservableProperty]
+    private ObservableCollection<string>? _sortBy;
+    
+    [ObservableProperty]
     private int _currentPage = 1;
     
     [ObservableProperty]
@@ -50,6 +53,18 @@ public partial class ProductsCatalogControlViewModel : ViewModelBase
     [ObservableProperty]
     private ProducerDTO? _selectedProducer;
     
+    [ObservableProperty]
+    private string? _searchText;
+    
+    [ObservableProperty]
+    private decimal? _priceFrom;
+    
+    [ObservableProperty]
+    private decimal? _priceTo;
+    
+    [ObservableProperty]
+    private string? _selectedSortBy;
+    
     public ProductsCatalogControlViewModel(IProductService productService)
     {
         _productService = productService;
@@ -62,9 +77,25 @@ public partial class ProductsCatalogControlViewModel : ViewModelBase
     {
         try
         {
+            string? producer = null, category = null;
+            
+            if (SelectedCategory?.Id != 0)
+                category = SelectedCategory?.Name;
+            
+            if (SelectedProducer?.Id != 0)
+                producer = SelectedProducer?.Name;
+            
             Products?.Clear();
         
-            var products =  await _productService.GetProductsPagedAsync(CurrentPage, PageSize);
+            var products =  await _productService.GetProductsPagedAsync(
+                CurrentPage,
+                PageSize,
+                SearchText,
+                category, 
+                producer,
+                SelectedSortBy,
+                PriceFrom,
+                PriceTo);
 
             if (products != null)
             {
@@ -166,6 +197,11 @@ public partial class ProductsCatalogControlViewModel : ViewModelBase
         
         if (Categories?.Count != 0)
             SelectedCategory = Categories?[0];
+
+        SearchText = null;
+        SelectedSortBy = SortBy?[0];
+        PriceFrom = null;
+        PriceTo = null;
     }
     
     [RelayCommand]
@@ -206,5 +242,15 @@ public partial class ProductsCatalogControlViewModel : ViewModelBase
         await GetCategoriesAsync();
         await GetProducersAsync();
         await GetProductsAsync();
+
+        SortBy =
+        [
+            "По возрастанию имени",
+            "По убыванию имени",
+            "По возрастанию цены",
+            "По убыванию цены"
+        ];
+
+        SelectedSortBy = SortBy[0];
     }
 }

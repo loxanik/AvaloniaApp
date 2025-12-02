@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Threading.Tasks;
@@ -22,9 +23,11 @@ public partial class ProductDetailsControlViewModel : ViewModelBase, IParameteri
     
     private int _productId;
     private ProductDetailsModel? _originalProduct;
+    private bool _isNewProduct;
     
     public bool CanEdit => _userContext.CurrentUser?.Role.Name is "manager" or "admin";
-    public string SaveButtonText => IsBusy ? "Сохранение..." : "Сохранить";
+    public string SaveButtonText => IsBusy ? (_isNewProduct ? "Создание..." : "Сохранение...")
+        : (_isNewProduct ? "Создать" : "Сохранить");
     
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(SaveButtonText))]
@@ -53,9 +56,41 @@ public partial class ProductDetailsControlViewModel : ViewModelBase, IParameteri
         if (param is not int productId) return;
         
         _productId = productId;
-        _ = LoadProductDetails();
+        _isNewProduct = productId == 0;
+        
+        if (_isNewProduct)
+        {
+            InitializeNewProduct();
+        }
+        else
+        {
+            _productId = productId;
+            _ = LoadProductDetails();
+        }
     }
 
+    private void InitializeNewProduct()
+    {
+        var newProductDto = new ProductDetailsDTO()
+        {
+            Name = "Новый товар",
+            Description = "Описание товара",
+            Price = 0m,
+            Producer = "",
+            Country = "",
+            Category = "",
+            IsDeleted = false,
+            Count = 0,
+            Parameters = new List<ParametersDTO>()
+        };
+
+        CurrentProductDetails = new ProductDetailsModel(newProductDto);
+
+        if (CanEdit)
+        {
+            BeginEdit();
+        }
+    }
     private async Task LoadProductDetails()
     {
         try
@@ -116,7 +151,7 @@ public partial class ProductDetailsControlViewModel : ViewModelBase, IParameteri
 
         _originalProduct = CloneProduct(CurrentProductDetails);
         IsEditing = true;
-        HasChanges = false;
+        HasChanges = _isNewProduct;
         
         CurrentProductDetails.PropertyChanged += OnProductPropertyChanged;
 
@@ -157,13 +192,20 @@ public partial class ProductDetailsControlViewModel : ViewModelBase, IParameteri
         }
         
         CurrentProductDetails.Parameters.CollectionChanged -= OnParametersCollectionChanged;
-        
-        CurrentProductDetails.Name = _originalProduct.Name;
-        CurrentProductDetails.Description = _originalProduct.Description;
-        CurrentProductDetails.Price = _originalProduct.Price;
-        CurrentProductDetails.Producer = _originalProduct.Producer;
-        CurrentProductDetails.Category = _originalProduct.Category;
-        CurrentProductDetails.Country = _originalProduct.Country;
+
+        if (_isNewProduct)
+        {
+            CurrentProductDetails = null;
+        }
+        else if (_originalProduct != null)
+        {
+            CurrentProductDetails.Name = _originalProduct.Name;
+            CurrentProductDetails.Description = _originalProduct.Description;
+            CurrentProductDetails.Price = _originalProduct.Price;
+            CurrentProductDetails.Producer = _originalProduct.Producer;
+            CurrentProductDetails.Category = _originalProduct.Category;
+            CurrentProductDetails.Country = _originalProduct.Country;
+        }
         
         IsEditing = false;
         HasChanges = false;
@@ -174,7 +216,7 @@ public partial class ProductDetailsControlViewModel : ViewModelBase, IParameteri
     {
        if (!IsEditing || CurrentProductDetails == null) return;
        
-       bool hasChanges = HasChanges;
+       bool hasChanges = HasChanges || _isNewProduct;
        
        CurrentProductDetails.PropertyChanged -= OnProductPropertyChanged;
 
@@ -188,26 +230,45 @@ public partial class ProductDetailsControlViewModel : ViewModelBase, IParameteri
        IsEditing = false;
        HasChanges = false;
 
-       _ = UpdateProductDetails(hasChanges);
+       _ = SaveProductDetails(hasChanges);
     }
 
-    private async Task UpdateProductDetails(bool hasChanges)
+    private async Task SaveProductDetails(bool hasChanges)
     {
         IsBusy = true;
 
         try
         {
-            //TODO сделать проверку на HasChanges
             if (CurrentProductDetails != null && hasChanges)
             {
-                await _productService.UpdateProductDetailsAsync(CurrentProductDetails.ToDto());
+                if (_isNewProduct)
+                {
+                    var createdProductId = await _productService.CreateProductAsync(CurrentProductDetails.ToDto());
 
-                var msg = MessageBoxManager.GetMessageBoxStandard("Сохранение",
-                    "Изменения успешно сохранены.",
-                    icon: Icon.Success);
-                await msg.ShowAsync();
+                    if (createdProductId > 0)
+                    {
+                        _productId = createdProductId;
+                        _isNewProduct = false;
+                        
+                        var msg = MessageBoxManager.GetMessageBoxStandard("Создание",
+                            "Товар успешно создан.",
+                            icon: Icon.Success);
+                        await msg.ShowAsync();
+                        
+                        await LoadProductDetails();
+                    }
+                }
+                else
+                {
+                    await _productService.UpdateProductDetailsAsync(CurrentProductDetails.ToDto());
+
+                    var msg = MessageBoxManager.GetMessageBoxStandard("Сохранение",
+                        "Изменения успешно сохранены.",
+                        icon: Icon.Success);
+                    await msg.ShowAsync();
+                }
             }
-            else
+            else if (!_isNewProduct)
             {
                 var msg = MessageBoxManager.GetMessageBoxStandard("Сохранение",
                     "Изменения не были обнаружены.",
@@ -217,16 +278,29 @@ public partial class ProductDetailsControlViewModel : ViewModelBase, IParameteri
         }
         catch (Exception e)
         {
-            AppLogger.LogError(e, $"Error saving product viewmodel: id:{CurrentProductDetails?.Id}");
-            var msg = MessageBoxManager.GetMessageBoxStandard("Сохранение",
-                "Произошла ошибка сохранения." +
-                "\nИзменения не были сохранены.",
+            AppLogger.LogError(e, 
+                _isNewProduct 
+                    ? $"Error creating product viewmodel" 
+                    : $"Error saving product viewmodel: id:{CurrentProductDetails?.Id}");
+                    
+            var msg = MessageBoxManager.GetMessageBoxStandard(_isNewProduct ? "Создание" : "Сохранение",
+                _isNewProduct 
+                    ? "Произошла ошибка создания товара." 
+                    : "Произошла ошибка сохранения.\nИзменения не были сохранены.",
                 icon: Icon.Error);
             await msg.ShowAsync();
+            
+            if (_isNewProduct)
+            {
+                IsEditing = true;
+            }
+            else
+            {
+                await LoadProductDetails();
+            }
         }
         finally
         {
-            await LoadProductDetails();
             IsBusy = false;
         }
     }
@@ -253,9 +327,10 @@ public partial class ProductDetailsControlViewModel : ViewModelBase, IParameteri
         {
             var dialog = MessageBoxManager.GetMessageBoxStandard(
                 "Подтверждение удаления",
-                $"Вы действительно хотите удалить выбранный параметр?\n\"{SelectedParameter.Name}" +
-                $" {SelectedParameter.Value}" +
-                $" {SelectedParameter.Unit}\"",
+                $"Вы действительно хотите удалить параметр:" +
+                $" \"{SelectedParameter?.Name}" +
+                $" {SelectedParameter?.Value}" +
+                $" {SelectedParameter?.Unit}\" ?",
                 ButtonEnum.YesNo,
                 icon: Icon.Question);
             
@@ -288,8 +363,7 @@ public partial class ProductDetailsControlViewModel : ViewModelBase, IParameteri
         try
         {
             var dialog = MessageBoxManager.GetMessageBoxStandard("Подтверждение действия",
-                $"Вы действительно хотите удалить данный товар?\n" +
-                $"{CurrentProductDetails.Name}",
+                $"Вы действительно хотите удалить товар: \"{CurrentProductDetails?.Name}\"?",
                 ButtonEnum.YesNo,
                 icon: Icon.Warning);
             

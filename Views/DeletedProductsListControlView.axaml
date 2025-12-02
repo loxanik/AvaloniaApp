@@ -18,7 +18,8 @@
                         <Border Background="AliceBlue"
                                 CornerRadius="10"
                                 BorderThickness="1"
-                                BorderBrush="Black">
+                                BorderBrush="Black"
+                                Padding="5">
                             <Grid>
                                 <StackPanel Orientation="Horizontal"
                                             Spacing="5">
