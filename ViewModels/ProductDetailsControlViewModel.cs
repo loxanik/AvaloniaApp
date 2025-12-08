@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
@@ -242,14 +241,10 @@ public partial class ProductDetailsControlViewModel : ViewModelBase, IParameteri
             if (result == ButtonResult.Yes)
             {
                 CancelEdit();
-            }
-            else
-            {
-                return;
+                WeakReferenceMessenger.Default.Send(new ChangeViewModelMessage(typeof(ProductsCatalogControlViewModel)));
             }
         }
         
-        WeakReferenceMessenger.Default.Send(new ChangeViewModelMessage(typeof(ProductsCatalogControlViewModel)));
     }
     
     [RelayCommand]
@@ -310,8 +305,6 @@ public partial class ProductDetailsControlViewModel : ViewModelBase, IParameteri
             SelectedProducer = null;
             SelectedCategory = null;
             SelectedParameter = null;
-
-            _ = GoToCatalogAsync();
         }
         else if (_originalProduct != null)
         {

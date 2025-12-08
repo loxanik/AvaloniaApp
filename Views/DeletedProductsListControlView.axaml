@@ -60,6 +60,9 @@
                         Command="{Binding RestoreSelectedProductCommand}"
                         CommandParameter="{Binding SelectedProduct}"/>
                 
+                <Button Content="Удалить"
+                        CommandParameter="{Binding SelectedProduct}"/>
+                
             </StackPanel>
             
         </Grid>

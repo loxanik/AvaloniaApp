@@ -1,7 +1,6 @@
 using System.Linq;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-using Microsoft.EntityFrameworkCore.Query.Internal;
 using Shop.Entities;
 using Shop.Interfaces;
 using Shop.Messages;

@@ -9,7 +9,7 @@
         x:Class="Shop.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/avalonia-logo.ico"
-        Title="Shop"
+        Title="Магазин мебели"
         MinHeight="600"
         MinWidth="1300"
         WindowStartupLocation="CenterScreen">
