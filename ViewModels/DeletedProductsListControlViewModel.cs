@@ -3,10 +3,12 @@ using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using MsBox.Avalonia;
 using MsBox.Avalonia.Enums;
 using Shop.DTOs;
 using Shop.Interfaces;
+using Shop.Messages;
 using Shop.Utils;
 
 namespace Shop.ViewModels;
@@ -20,22 +22,32 @@ public partial class DeletedProductsListControlViewModel : ViewModelBase
     
     [ObservableProperty]
     private ProductPreviewDTO? _selectedProduct;
+
+    [ObservableProperty]
+    private int _deletedProductCount = 0;
+    public bool IsProductSelected => SelectedProduct != null;
+
     
     public DeletedProductsListControlViewModel(IProductService productService)
     {
         _productService = productService;
+
+        _ = InitializeAsync();
     }
 
     [RelayCommand]
-    private async Task GetDeletedProducts()
+    private async Task GetDeletedProductsAsync()
     {
+        SelectedProduct = null;
+        
         try
         {
             var products = await _productService.GetDeletedProductsAsync();
-            
+
             if (products != null)
                 DeletedProducts = new ObservableCollection<ProductPreviewDTO>(products);
-            
+
+            DeletedProductCount = products.Count;
         }
         catch (Exception e)
         {
@@ -44,11 +56,9 @@ public partial class DeletedProductsListControlViewModel : ViewModelBase
         }
     }
 
-    [RelayCommand]
-    private async Task RestoreSelectedProduct(ProductPreviewDTO? selectedProduct)
+    [RelayCommand(CanExecute = nameof(IsProductSelected))]
+    private async Task RestoreSelectedProductAsync(ProductPreviewDTO? selectedProduct)
     {
-        if (selectedProduct == null) return;
-        
         try
         {
             bool isSuccess = await _productService.RestoreSoftDeletedProductAsync(selectedProduct.Id);
@@ -60,7 +70,7 @@ public partial class DeletedProductsListControlViewModel : ViewModelBase
                     icon: Icon.Success);
 
                 await msg.ShowAsync();
-                await GetDeletedProducts();
+                await GetDeletedProductsAsync();
             }
             else
             {
@@ -78,5 +88,28 @@ public partial class DeletedProductsListControlViewModel : ViewModelBase
                 icon: Icon.Error);
             await msg.ShowAsync();
         }
+    }
+
+    [RelayCommand(CanExecute = nameof(IsProductSelected))]
+    private async Task DeleteSelectedProductAsync(ProductPreviewDTO? selectedProduct)
+    {
+        var msg = MessageBoxManager.GetMessageBoxStandard("Удаление",
+            $"Вы действительно хотите полностью удалить товар \"{selectedProduct.Name}\" ?",
+            ButtonEnum.OkCancel,
+            icon: Icon.Question);
+        await msg.ShowAsync();
+    }
+
+    [RelayCommand(CanExecute = nameof(IsProductSelected))]
+    private void OpenDeletedProductDetails(object parameter)
+    {
+        if (parameter is int productId)
+            WeakReferenceMessenger.Default.Send(new ChangeViewModelMessage(typeof(ProductDetailsControlViewModel),
+                productId));
+    }
+    
+    private async Task InitializeAsync()
+    {
+        await GetDeletedProductsAsync();
     }
 }

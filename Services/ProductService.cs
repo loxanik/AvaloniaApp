@@ -437,6 +437,7 @@ public class ProductService : IProductService
             var deletedProducts = await _shopContext.Products
                 .Where(p => p.IsDeleted)
                 .Include(p => p.Category)
+                .OrderBy(p => p.Id)
                 .Select(p => new ProductPreviewDTO
                 {
                     Id = p.Id,

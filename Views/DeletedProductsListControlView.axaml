@@ -3,19 +3,83 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:vm="clr-namespace:Shop.ViewModels"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:materialsIcon="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:DataType="vm:DeletedProductsListControlViewModel"
              x:Class="Shop.Views.DeletedProductsListControlView">
     
-    <Grid RowDefinitions="*, Auto">
+    <Grid RowDefinitions="Auto, *">
         
-        <ScrollViewer>
+        <Grid>
+            <Border Grid.ColumnSpan="2" 
+                    CornerRadius="20 0 0 20"
+                    Background="AliceBlue"
+                    Height="60"
+                    BorderBrush="Black"
+                    BorderThickness="1"
+                    Margin="5 0 0 0"
+                    Padding="10">
+                <Grid ColumnDefinitions="*, Auto">
+                    
+                     <TextBlock Margin="5"
+                                VerticalAlignment="Center">
+                        <Run Text="Количество"/>
+                        <Run Text="{Binding DeletedProductCount}"/>
+                     </TextBlock>
+
+            
+                    <StackPanel Grid.Column="1"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Spacing="20"
+                                Orientation="Horizontal">
+                        
+                        <Button Command="{Binding GetDeletedProductsCommand}">
+                            <StackPanel Orientation="Horizontal" Spacing="2">
+                                <materialsIcon:MaterialIcon Kind="Refresh"/>
+                                <TextBlock Text="Обновить"/>
+                            </StackPanel>
+                        </Button>
+                        
+                        <Button Command="{Binding RestoreSelectedProductCommand}"
+                                CommandParameter="{Binding SelectedProduct}">
+                            <StackPanel Orientation="Horizontal" Spacing="2">
+                                <materialsIcon:MaterialIcon Kind="RestoreFromTrash"/>
+                                <TextBlock Text="Восстановить"/>
+                            </StackPanel>
+                        </Button>
+                        
+                        <Button Command="{Binding DeleteSelectedProductCommand}"
+                                CommandParameter="{Binding SelectedProduct}">
+                            <StackPanel Orientation="Horizontal" Spacing="2">
+                                <materialsIcon:MaterialIcon Kind="Delete"/>
+                                <TextBlock Text="Удалить"/>
+                            </StackPanel>
+                        </Button>
+                        
+                        <Button Command="{Binding OpenDeletedProductDetailsCommand}"
+                                CommandParameter="{Binding SelectedProduct.Id,
+                                FallbackValue={x:Null}}">
+                            <StackPanel Orientation="Horizontal" Spacing="2">
+                                <materialsIcon:MaterialIcon Kind="OpenInApp"/>
+                                <TextBlock Text="Подробно"/>
+                            </StackPanel>
+                        </Button>
+                        
+                    </StackPanel>
+                    
+                </Grid>
+            </Border>
+        </Grid>
+        
+        <ScrollViewer Grid.Row="1">
             <ListBox ItemsSource="{Binding DeletedProducts}"
-                     SelectedItem="{Binding SelectedProduct}">
+                     SelectedItem="{Binding SelectedProduct}"
+                     Background="Transparent">
                 <ListBox.ItemTemplate>
                     <DataTemplate>
                         
-                        <Border Background="AliceBlue"
+                        <Border Background="LightGray"
                                 CornerRadius="10"
                                 BorderThickness="1"
                                 BorderBrush="Black"
@@ -24,17 +88,17 @@
                                 <StackPanel Orientation="Horizontal"
                                             Spacing="5">
                                     <TextBlock>
-                                        <Run Text="Id:"/>
+                                        <Run Text="Id:" FontWeight="Bold"/>
                                         <Run Text="{Binding Id}"/>
                                     </TextBlock>
                                     
                                     <TextBlock>
-                                        <Run Text="Название:"/>
+                                        <Run Text="Название:" FontWeight="Bold"/>
                                         <Run Text="{Binding Name}"/>
                                     </TextBlock>
                                     
                                     <TextBlock>
-                                        <Run Text="Категория:"/>
+                                        <Run Text="Категория:" FontWeight="Bold"/>
                                         <Run Text="{Binding Category}"/>
                                     </TextBlock>
                                 </StackPanel>
@@ -45,27 +109,6 @@
                 </ListBox.ItemTemplate>
             </ListBox>
         </ScrollViewer>
-        
-        <Grid Grid.Row="1"
-              Margin="5">
-            <StackPanel HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
-                        Spacing="20"
-                        Orientation="Horizontal">
-                
-                <Button Content="Загрузить"
-                        Command="{Binding GetDeletedProductsCommand}"/>
-                
-                <Button Content="Восстановить"
-                        Command="{Binding RestoreSelectedProductCommand}"
-                        CommandParameter="{Binding SelectedProduct}"/>
-                
-                <Button Content="Удалить"
-                        CommandParameter="{Binding SelectedProduct}"/>
-                
-            </StackPanel>
-            
-        </Grid>
         
     </Grid>
     

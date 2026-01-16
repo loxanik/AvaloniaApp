@@ -244,6 +244,13 @@ public partial class ProductDetailsControlViewModel : ViewModelBase, IParameteri
                 WeakReferenceMessenger.Default.Send(new ChangeViewModelMessage(typeof(ProductsCatalogControlViewModel)));
             }
         }
+        else
+        {
+            if (CurrentProductDetails.IsDeleted)
+                WeakReferenceMessenger.Default.Send(new ChangeViewModelMessage(typeof(DeletedProductsListControlViewModel)));
+            else
+                WeakReferenceMessenger.Default.Send(new ChangeViewModelMessage(typeof(ProductsCatalogControlViewModel)));
+        }
         
     }
     
@@ -396,7 +403,8 @@ public partial class ProductDetailsControlViewModel : ViewModelBase, IParameteri
                     ? $"Error creating product viewmodel" 
                     : $"Error saving product viewmodel: id:{CurrentProductDetails?.Id}");
                     
-            var msg = MessageBoxManager.GetMessageBoxStandard(_isNewProduct ? "Создание" : "Сохранение",
+            var msg = MessageBoxManager.GetMessageBoxStandard(
+                _isNewProduct ? "Создание" : "Сохранение",
                 _isNewProduct 
                     ? "Произошла ошибка создания товара." 
                     : "Произошла ошибка сохранения.\nИзменения не были сохранены.",

@@ -106,19 +106,23 @@ public partial class RegistrationControlViewModel(IAuthService authService) : Vi
 
             if (isSuccess)
             {
-                var msg = MessageBoxManager.GetMessageBoxStandard("Регистрация", "Успех", icon: Icon.Info);
+                var msg = MessageBoxManager.GetMessageBoxStandard("Регистрация",
+                    "Успех",
+                    icon: Icon.Success);
                 await msg.ShowAsync();
                 ChangeToLogin();
             }
             else
             {
-                var msg = MessageBoxManager.GetMessageBoxStandard("Регистрация", "Неуспешно");
+                var msg = MessageBoxManager.GetMessageBoxStandard("Регистрация",
+                    "Ошибка регистрации",
+                    icon: Icon.Error);
                 await msg.ShowAsync();
             }
         }
         catch (Exception e)
         {
-            AppLogger.LogError(e, $"Registration viewmode error: {Login}");
+            AppLogger.LogError(e, $"Registration viewmodel error: {Login}");
         }
         finally
         {
