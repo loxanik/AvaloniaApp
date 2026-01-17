@@ -1,5 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -18,13 +19,16 @@ public partial class DeletedProductsListControlViewModel : ViewModelBase
     private readonly IProductService _productService;
 
     [ObservableProperty]
-    private ObservableCollection<ProductPreviewDTO> _deletedProducts = [];
+    private ObservableCollection<ProductPreviewDTO>? _deletedProducts = [];
     
     [ObservableProperty]
     private ProductPreviewDTO? _selectedProduct;
 
     [ObservableProperty]
     private int _deletedProductCount = 0;
+
+    [ObservableProperty] 
+    private bool _isNotEmpty;
     public bool IsProductSelected => SelectedProduct != null;
 
     
@@ -46,7 +50,7 @@ public partial class DeletedProductsListControlViewModel : ViewModelBase
 
             if (products != null)
                 DeletedProducts = new ObservableCollection<ProductPreviewDTO>(products);
-
+            
             DeletedProductCount = products.Count;
         }
         catch (Exception e)
@@ -111,5 +115,10 @@ public partial class DeletedProductsListControlViewModel : ViewModelBase
     private async Task InitializeAsync()
     {
         await GetDeletedProductsAsync();
+    }
+
+    partial void OnDeletedProductsChanged(ObservableCollection<ProductPreviewDTO>? value)
+    {
+        IsNotEmpty = DeletedProducts?.Any() == true;
     }
 }

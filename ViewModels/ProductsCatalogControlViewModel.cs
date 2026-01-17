@@ -1,6 +1,8 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
+using Avalonia.Controls.Documents;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
@@ -64,6 +66,9 @@ public partial class ProductsCatalogControlViewModel : ViewModelBase
     
     [ObservableProperty]
     private string? _selectedSortBy;
+
+    [ObservableProperty] 
+    private bool _isNotEmpty;
     
     public ProductsCatalogControlViewModel(IProductService productService)
     {
@@ -234,6 +239,11 @@ public partial class ProductsCatalogControlViewModel : ViewModelBase
         {
             _isResetting = false;
         }
+    }
+
+    partial void OnProductsChanged(ObservableCollection<ProductPreviewDTO>? value)
+    {
+        IsNotEmpty = value?.Any() == true;
     }
 
     private async Task InitializeAsync()

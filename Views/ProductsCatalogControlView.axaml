@@ -11,6 +11,7 @@
     
     <Grid RowDefinitions="Auto,*,Auto">
         
+        <!-- Навигационная панель -->
         <Grid>
             
             <Border CornerRadius="20 0 0 20"
@@ -76,7 +77,10 @@
             
         </Grid>
         
-        <Grid Grid.Row="1">
+        <!-- Каталог -->
+        
+        <Grid Grid.Row="1"
+              IsVisible="{Binding IsNotEmpty}">
             
             <ScrollViewer HorizontalScrollBarVisibility="Hidden"
                           VerticalScrollBarVisibility="Auto">
@@ -159,6 +163,23 @@
             </ScrollViewer>
             
         </Grid>
+        
+        <!-- Если каталог пуст -->
+        
+        <Grid Grid.Row="1"
+              IsVisible="{Binding !IsNotEmpty}">
+            
+            <TextBlock HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       FontSize="24"
+                       TextAlignment="Center">
+                <Run Text="Ничего не найдено"/>
+                <LineBreak/>
+                <Run Text="Попробуйте изменить фильтры или зайдите позже"/>
+            </TextBlock>
+        </Grid>
+        
+        <!-- Переключение страниц -->
         
         <Grid Grid.Row="2">
             <Border Background="AliceBlue"

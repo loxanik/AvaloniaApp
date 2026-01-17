@@ -10,6 +10,8 @@
     
     <Grid RowDefinitions="Auto, *">
         
+        <!-- Навигационная панель -->
+        
         <Grid>
             <Border Grid.ColumnSpan="2" 
                     CornerRadius="20 0 0 20"
@@ -72,7 +74,10 @@
             </Border>
         </Grid>
         
-        <ScrollViewer Grid.Row="1">
+        <!-- Список -->
+        
+        <ScrollViewer Grid.Row="1"
+                      IsVisible="{Binding IsNotEmpty}">
             <ListBox ItemsSource="{Binding DeletedProducts}"
                      SelectedItem="{Binding SelectedProduct}"
                      Background="Transparent">
@@ -109,6 +114,18 @@
                 </ListBox.ItemTemplate>
             </ListBox>
         </ScrollViewer>
+        
+        <!-- Если ничего не найдено -->
+        <Grid Grid.Row="1"
+              IsVisible="{Binding !IsNotEmpty}">
+            
+            <TextBlock HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       FontSize="24"
+                       TextAlignment="Center"
+                       Text="Список удаленных товаров пуст"/>
+            
+        </Grid>
         
     </Grid>
     

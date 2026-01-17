@@ -246,10 +246,9 @@ public partial class ProductDetailsControlViewModel : ViewModelBase, IParameteri
         }
         else
         {
-            if (CurrentProductDetails.IsDeleted)
-                WeakReferenceMessenger.Default.Send(new ChangeViewModelMessage(typeof(DeletedProductsListControlViewModel)));
-            else
-                WeakReferenceMessenger.Default.Send(new ChangeViewModelMessage(typeof(ProductsCatalogControlViewModel)));
+            WeakReferenceMessenger.Default.Send(CurrentProductDetails.IsDeleted
+                ? new ChangeViewModelMessage(typeof(DeletedProductsListControlViewModel))
+                : new ChangeViewModelMessage(typeof(ProductsCatalogControlViewModel)));
         }
         
     }
