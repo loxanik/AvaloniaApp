@@ -125,11 +125,39 @@
             </Viewbox>
         </Border>
         
-        <ContentControl Grid.Row="1" Content="{Binding CurrentViewModel}"/>
+        <TransitioningContentControl Grid.Row="1" Content="{Binding CurrentViewModel}">
+            <TransitioningContentControl.PageTransition>
+                <CrossFade Duration="0:00:00.200"/>
+            </TransitioningContentControl.PageTransition>
+        </TransitioningContentControl>
         
-        <Grid Grid.Row="1" ZIndex="1" HorizontalAlignment="Right" IsVisible="{Binding IsProfileVisible}">
-            <view:UserProfileControlView DataContext="{Binding CurrentProfileViewModel}"
-                                         Width="{Binding ElementName=BorderNav, Path=Bounds.Width}"/>
+        <Grid Grid.Row="1" 
+              ZIndex="1" 
+              HorizontalAlignment="Right"
+              x:Name="ProfileContainer"
+              IsHitTestVisible="{Binding IsProfileVisible}">
+    
+            <Grid.Styles>
+                <Style Selector="Grid#ProfileContainer">
+                    <Setter Property="Opacity" Value="0"/>
+                    <Setter Property="RenderTransform" Value="translateX(250px)"/>
+                    <Setter Property="Transitions">
+                        <Transitions>
+                            <DoubleTransition Property="Opacity" Duration="0:0:0.4" Easing="CubicEaseOut"/>
+                            <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.5" Easing="CubicEaseOut"/>
+                        </Transitions>
+                    </Setter>
+                </Style>
+
+                <Style Selector="Grid#ProfileContainer[IsHitTestVisible=True]">
+                    <Setter Property="Opacity" Value="1"/>
+                    <Setter Property="RenderTransform" Value="translateX(0px)"/>
+                </Style>
+            </Grid.Styles>
+
+            <view:UserProfileControlView 
+                DataContext="{Binding CurrentProfileViewModel}"
+                Width="{Binding ElementName=BorderNav, Path=Bounds.Width}"/>
         </Grid>
         
     </Grid>

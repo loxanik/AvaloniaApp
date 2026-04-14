@@ -10,6 +10,8 @@ public class ProductPreviewDTO
     public string Producer { get; set; }
     public decimal Price { get; set; }
     public string Category { get; set; }
+    public int AvailableQuantity { get; set; }
+    public bool IsInStock => AvailableQuantity > 0;
     public bool IsDeleted { get; set; }
     public byte[]? Image { get; set; }
     public Bitmap? DisplayImage { get; set; }

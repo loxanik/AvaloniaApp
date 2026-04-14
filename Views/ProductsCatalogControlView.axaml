@@ -139,7 +139,10 @@
                                             <Grid Row="1" ColumnDefinitions="*, Auto">
                                                 <Button ToolTip.Tip="Добавить в корзину"
                                                         Background="Transparent"
-                                                        VerticalAlignment="Center">
+                                                        VerticalAlignment="Center"
+                                                        Command="{Binding #RootControl.DataContext.AddToCartCommand, FallbackValue={x:Null}}"
+                                                        CommandParameter="{Binding Id}"
+                                                        IsEnabled="{Binding IsInStock}">
                                                     <materialIcons:MaterialIcon Kind="CartAdd" Height="16"/>
                                                 </Button>
                                                 
@@ -150,6 +153,12 @@
                                                     <Run Text="₽"/>
                                                 </TextBlock>
                                             </Grid>
+                                            <TextBlock Grid.Row="1"
+                                                       Foreground="DarkRed"
+                                                       FontSize="12"
+                                                       Opacity="0.9"
+                                                       IsVisible="{Binding !IsInStock}"
+                                                       Text="Нет в наличии"/>
                                         </Grid>
                                     </Grid>
                                 </Button>

@@ -2,8 +2,143 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
              xmlns:vm="clr-namespace:Shop.ViewModels"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="Shop.Views.CartControlView"
-             x:DataType="vm:CartControlViewModel">
+             x:DataType="vm:CartControlViewModel"
+             x:Name="RootControl">
+    <Grid RowDefinitions="Auto,*,Auto" Margin="10">
+
+        <Border Background="AliceBlue"
+                CornerRadius="12"
+                BorderBrush="Black"
+                BorderThickness="1"
+                Padding="12">
+            <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
+                <TextBlock FontSize="18" FontWeight="SemiBold" Text="Корзина"/>
+                <Button Grid.Column="1"
+                        Command="{Binding ClearCommand}"
+                        IsEnabled="{Binding !IsEmpty}">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <materialIcons:MaterialIcon Kind="Delete"/>
+                        <TextBlock Text="Очистить"/>
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="1">
+            <Grid IsVisible="{Binding IsEmpty}">
+                <TextBlock HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           FontSize="20"
+                           TextAlignment="Center">
+                    <Run Text="Корзина пуста"/>
+                    <LineBreak/>
+                    <Run Text="Добавьте товары из каталога"/>
+                </TextBlock>
+            </Grid>
+
+            <ScrollViewer IsVisible="{Binding !IsEmpty}"
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled">
+                <ItemsControl ItemsSource="{Binding Items}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Margin="0,8"
+                                    Padding="10"
+                                    CornerRadius="12"
+                                    BorderBrush="#E0E0E0"
+                                    BorderThickness="1"
+                                    Background="White">
+                                <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto">
+
+                                    <Border Width="80" Height="80"
+                                            CornerRadius="10"
+                                            Background="#F5F5F5"
+                                            ClipToBounds="True"
+                                            Margin="0,0,12,0">
+                                        <Image Source="{Binding DisplayImage}" Stretch="UniformToFill"/>
+                                    </Border>
+
+                                    <StackPanel Grid.Column="1" Spacing="4">
+                                        <TextBlock FontWeight="SemiBold" FontSize="16" Text="{Binding Name}" TextWrapping="Wrap"/>
+                                        <TextBlock Opacity="0.8">
+                                            <Run Text="{Binding UnitPrice}"/>
+                                            <Run Text=" ₽ / шт"/>
+                                        </TextBlock>
+                                        <TextBlock Opacity="0.7" FontSize="12">
+                                            <Run Text="В наличии: "/>
+                                            <Run Text="{Binding AvailableQuantity}"/>
+                                        </TextBlock>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="2" HorizontalAlignment="Right" Spacing="8">
+                                        <Button Command="{Binding #RootControl.DataContext.RemoveCommand, FallbackValue={x:Null}}"
+                                                CommandParameter="{Binding ProductId}">
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <materialIcons:MaterialIcon Kind="Close"/>
+                                                <TextBlock Text="Убрать"/>
+                                            </StackPanel>
+                                        </Button>
+
+                                        <TextBlock HorizontalAlignment="Right" FontWeight="SemiBold">
+                                            <Run Text="{Binding LineTotal}"/>
+                                            <Run Text=" ₽"/>
+                                        </TextBlock>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
+                                                Orientation="Horizontal"
+                                                Spacing="10"
+                                                VerticalAlignment="Center">
+                                        <TextBlock VerticalAlignment="Center" Text="Количество:"/>
+
+                                        <Button Command="{Binding #RootControl.DataContext.DecreaseCommand, FallbackValue={x:Null}}"
+                                                CommandParameter="{Binding ProductId}"
+                                                IsEnabled="{Binding CanDecrease}">
+                                            <materialIcons:MaterialIcon Kind="Minus"/>
+                                        </Button>
+
+                                        <TextBlock VerticalAlignment="Center" FontSize="16" FontWeight="SemiBold" Text="{Binding Quantity}"/>
+
+                                        <Button Command="{Binding #RootControl.DataContext.IncreaseCommand, FallbackValue={x:Null}}"
+                                                CommandParameter="{Binding ProductId}"
+                                                IsEnabled="{Binding CanIncrease}">
+                                            <materialIcons:MaterialIcon Kind="Plus"/>
+                                        </Button>
+                                    </StackPanel>
+
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Grid>
+
+        <Border Grid.Row="2"
+                Background="AliceBlue"
+                CornerRadius="12"
+                BorderBrush="Black"
+                BorderThickness="1"
+                Padding="12"
+                Margin="0,10,0,0">
+            <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
+                <Button Command="{Binding RefreshCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <materialIcons:MaterialIcon Kind="Refresh"/>
+                        <TextBlock Text="Обновить"/>
+                    </StackPanel>
+                </Button>
+                <TextBlock Grid.Column="1" FontSize="18" FontWeight="SemiBold">
+                    <Run Text="Итого: "/>
+                    <Run Text="{Binding Total}"/>
+                    <Run Text=" ₽"/>
+                </TextBlock>
+            </Grid>
+        </Border>
+
+    </Grid>
 </UserControl>

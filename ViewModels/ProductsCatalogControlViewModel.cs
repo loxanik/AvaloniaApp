@@ -16,6 +16,7 @@ namespace Shop.ViewModels;
 public partial class ProductsCatalogControlViewModel : ViewModelBase
 {
     private readonly IProductService _productService;
+    private readonly ICartService _cartService;
 
     private bool _isResetting;
     
@@ -70,9 +71,10 @@ public partial class ProductsCatalogControlViewModel : ViewModelBase
     [ObservableProperty] 
     private bool _isNotEmpty;
     
-    public ProductsCatalogControlViewModel(IProductService productService)
+    public ProductsCatalogControlViewModel(IProductService productService, ICartService cartService)
     {
         _productService = productService;
+        _cartService = cartService;
 
         _ = InitializeAsync();
     }
@@ -175,7 +177,6 @@ public partial class ProductsCatalogControlViewModel : ViewModelBase
         {
             Producers?.Clear();
 
-
             var producers = await _productService.GetProducersAsync();
 
             if (producers != null)
@@ -213,6 +214,22 @@ public partial class ProductsCatalogControlViewModel : ViewModelBase
     {
         if (parameter is int productId)
             WeakReferenceMessenger.Default.Send(new ChangeViewModelMessage(typeof(ProductDetailsControlViewModel), productId));
+    }
+
+    [RelayCommand]
+    private async Task AddToCartAsync(object? parameter)
+    {
+        try
+        {
+            if (parameter is not int productId) return;
+            var cart = await _cartService.AddToMyCartAsync(productId, 1);
+            if (cart != null)
+                WeakReferenceMessenger.Default.Send(new CartChangedMessage());
+        }
+        catch (Exception e)
+        {
+            AppLogger.LogError(e, $"Add to cart error viewmodel: productId={parameter}");
+        }
     }
 
     public async Task ResetForNewUserAsync()

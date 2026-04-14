@@ -5,7 +5,7 @@ namespace Shop.Models;
 
 public partial class ParametersModel : ObservableObject
 {
-    private readonly ParametersDTO  _dto;
+    private readonly ParametersDTO _dto;
 
     public ParametersModel(ParametersDTO dto)
     {

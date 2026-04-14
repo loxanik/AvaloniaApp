@@ -88,8 +88,11 @@ public class ProductService : IProductService
                     Category = x.Product.Category.Name,
                     Producer = x.Product.Producer.Name,
                     Description = x.Product.Description,
-                    Image = x.Product.Image.Image1,
-                    Price = x.Price
+                    Image = x.Product.Image != null ? x.Product.Image.Image1 : null,
+                    Price = x.Price,
+                    AvailableQuantity = x.Product.ShopProducts
+                        .Select(sp => (int?)sp.Count)
+                        .FirstOrDefault() ?? 0
                 }).ToListAsync();
 
             foreach (var product in items)

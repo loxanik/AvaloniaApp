@@ -33,6 +33,7 @@ public partial class App : Application
         
         services.AddSingleton<IAuthService, AuthService>();
         services.AddSingleton<IProductService, ProductService>();
+        services.AddSingleton<ICartService, CartService>();
         services.AddSingleton<IUserContext, UserContext>();
         services.AddSingleton<ILocalizationHelper, LocalizationHelper>();
         services.AddSingleton<IImageService, ImageService>();
@@ -48,6 +49,13 @@ public partial class App : Application
         services.AddTransient<ProductDetailsControlViewModel>();
         
         Ioc.Default.ConfigureServices(services.BuildServiceProvider());
+
+        // Проект без миграций: убедимся, что таблицы корзины существуют
+        using (var scope = Ioc.Default.CreateScope())
+        {
+            var ctx = scope.ServiceProvider.GetRequiredService<ShopContext>();
+            CartSchemaInitializer.EnsureCartTablesCreated(ctx);
+        }
         
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {

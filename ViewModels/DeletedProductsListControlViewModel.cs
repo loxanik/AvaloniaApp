@@ -25,7 +25,7 @@ public partial class DeletedProductsListControlViewModel : ViewModelBase
     private ProductPreviewDTO? _selectedProduct;
 
     [ObservableProperty]
-    private int _deletedProductCount = 0;
+    private int _deletedProductCount;
 
     [ObservableProperty] 
     private bool _isNotEmpty;
@@ -98,7 +98,7 @@ public partial class DeletedProductsListControlViewModel : ViewModelBase
     private async Task DeleteSelectedProductAsync(ProductPreviewDTO? selectedProduct)
     {
         var msg = MessageBoxManager.GetMessageBoxStandard("Удаление",
-            $"Вы действительно хотите полностью удалить товар \"{selectedProduct.Name}\" ?",
+            $"Вы действительно хотите полностью удалить товар \"{selectedProduct?.Name}\" ?",
             ButtonEnum.OkCancel,
             icon: Icon.Question);
         await msg.ShowAsync();
