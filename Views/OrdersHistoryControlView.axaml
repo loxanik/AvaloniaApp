@@ -1,0 +1,63 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:Shop.ViewModels"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="600"
+             x:Class="Shop.Views.OrdersHistoryControlView"
+             x:DataType="vm:OrdersHistoryControlViewModel"
+             x:Name="RootControl">
+    <Grid Margin="10" RowDefinitions="Auto,*,Auto" RowSpacing="8">
+        <Border Background="AliceBlue" CornerRadius="12" BorderBrush="Black" BorderThickness="1" Padding="12">
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBlock FontSize="18" FontWeight="SemiBold" Text="История заказов"/>
+                <Button Grid.Column="1" Command="{Binding RefreshCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <materialIcons:MaterialIcon Kind="Refresh"/>
+                        <TextBlock Text="Обновить"/>
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="1">
+            <TextBlock IsVisible="{Binding IsEmpty}"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       FontSize="18"
+                       Text="Пока нет оформленных заказов"/>
+
+            <ScrollViewer IsVisible="{Binding !IsEmpty}" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <ItemsControl ItemsSource="{Binding Orders}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Margin="0,0,0,8" Padding="10" Background="White" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="10">
+                                <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="6">
+                                    <Grid ColumnDefinitions="Auto,Auto,*,Auto">
+                                        <TextBlock FontWeight="SemiBold" Text="{Binding OrderId, StringFormat=Заказ #{0}}"/>
+                                        <TextBlock Grid.Column="1" Margin="10,0,0,0" Text="{Binding DateDisplay}"/>
+                                        <TextBlock Grid.Column="3" Text="{Binding StatusDisplayName}" FontWeight="SemiBold"/>
+                                    </Grid>
+                                    <ItemsControl Grid.Row="1" ItemsSource="{Binding Items}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,2,0,2">
+                                                    <TextBlock Text="{Binding ProductName}"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding Quantity, StringFormat= x{0}}" Margin="6,0,0,0"/>
+                                                    <TextBlock Grid.Column="2" Text="{Binding LineTotal, StringFormat={}{0} ₽}" Margin="8,0,0,0" HorizontalAlignment="Right"/>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                    <TextBlock Grid.Row="2" HorizontalAlignment="Right" FontWeight="SemiBold"
+                                               Text="{Binding Total, StringFormat=Итого: {0} ₽}"/>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</UserControl>

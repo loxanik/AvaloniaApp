@@ -125,18 +125,30 @@
                 BorderThickness="1"
                 Padding="12"
                 Margin="0,10,0,0">
-            <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
+            <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="Auto,Auto,*,Auto" RowSpacing="8">
                 <Button Command="{Binding RefreshCommand}">
                     <StackPanel Orientation="Horizontal" Spacing="6">
                         <materialIcons:MaterialIcon Kind="Refresh"/>
                         <TextBlock Text="Обновить"/>
                     </StackPanel>
                 </Button>
-                <TextBlock Grid.Column="1" FontSize="18" FontWeight="SemiBold">
+                <Button Grid.Column="1"
+                        Margin="8,0,0,0"
+                        Command="{Binding CheckoutCommand}"
+                        IsEnabled="{Binding !IsEmpty}">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <materialIcons:MaterialIcon Kind="Cart"/>
+                        <TextBlock Text="Оформить заказ"/>
+                    </StackPanel>
+                </Button>
+                <TextBlock Grid.Column="3" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center">
                     <Run Text="Итого: "/>
                     <Run Text="{Binding Total}"/>
                     <Run Text=" ₽"/>
                 </TextBlock>
+                <TextBlock Grid.Row="1"
+                           Grid.ColumnSpan="4"
+                           Text="{Binding CheckoutInfo}"/>
             </Grid>
         </Border>
 

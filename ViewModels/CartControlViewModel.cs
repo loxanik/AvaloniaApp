@@ -1,5 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -15,6 +16,8 @@ namespace Shop.ViewModels;
 public partial class CartControlViewModel : ViewModelBase
 {
     private readonly ICartService _cartService;
+    private readonly IOrderService _orderService;
+    private readonly IUserContext _userContext;
 
     [ObservableProperty]
     private ObservableCollection<CartItemDTO> _items = [];
@@ -25,10 +28,16 @@ public partial class CartControlViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isEmpty = true;
 
-    public CartControlViewModel(ICartService cartService)
+    [ObservableProperty]
+    private string _checkoutInfo = string.Empty;
+
+    public CartControlViewModel(ICartService cartService, IOrderService orderService, IUserContext userContext)
     {
         _cartService = cartService;
+        _orderService = orderService;
+        _userContext = userContext;
         WeakReferenceMessenger.Default.Register<CartChangedMessage>(this, (_, _) => _ = RefreshAsync());
+        _userContext.PropertyChanged += UserContextOnPropertyChanged;
         _ = RefreshAsync();
     }
 
@@ -46,6 +55,15 @@ public partial class CartControlViewModel : ViewModelBase
         {
             AppLogger.LogError(e, "Refresh cart error viewmodel");
         }
+    }
+
+    private void UserContextOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(IUserContext.CurrentUser))
+            return;
+
+        CheckoutInfo = string.Empty;
+        _ = RefreshAsync();
     }
 
     [RelayCommand]
@@ -80,6 +98,17 @@ public partial class CartControlViewModel : ViewModelBase
     private async Task ClearAsync()
     {
         await _cartService.ClearMyCartAsync();
+        await RefreshAsync();
+    }
+
+    [RelayCommand]
+    private async Task CheckoutAsync()
+    {
+        CheckoutInfo = string.Empty;
+        var success = await _orderService.CreateOrderFromMyCartAsync();
+        CheckoutInfo = success
+            ? "Заказ оформлен. Ожидайте подтверждения оплаты менеджером."
+            : "Не удалось оформить заказ. Проверьте корзину и остатки товара.";
         await RefreshAsync();
     }
 }

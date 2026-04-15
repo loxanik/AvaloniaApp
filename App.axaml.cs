@@ -34,6 +34,7 @@ public partial class App : Application
         services.AddSingleton<IAuthService, AuthService>();
         services.AddSingleton<IProductService, ProductService>();
         services.AddSingleton<ICartService, CartService>();
+        services.AddSingleton<IOrderService, OrderService>();
         services.AddSingleton<IUserContext, UserContext>();
         services.AddSingleton<ILocalizationHelper, LocalizationHelper>();
         services.AddSingleton<IImageService, ImageService>();
@@ -47,6 +48,8 @@ public partial class App : Application
         services.AddTransient<LoginControlViewModel>();
         services.AddTransient<RegistrationControlViewModel>();
         services.AddTransient<ProductDetailsControlViewModel>();
+        services.AddTransient<OrdersHistoryControlViewModel>();
+        services.AddTransient<OrdersManagementControlViewModel>();
         
         Ioc.Default.ConfigureServices(services.BuildServiceProvider());
 

@@ -100,6 +100,31 @@
                 </StackPanel>
             
             </Button>
+
+            <Button Margin="20"
+                    CornerRadius="20"
+                    MinHeight="30"
+                    Command="{Binding OpenOrdersHistoryCommand}">
+
+                <StackPanel Orientation="Horizontal" Spacing="2">
+                    <materialsIcon:MaterialIcon Kind="History"/>
+                    <TextBlock Text="История заказов"/>
+                </StackPanel>
+
+            </Button>
+
+            <Button Margin="20"
+                    CornerRadius="20"
+                    MinHeight="30"
+                    Command="{Binding OpenOrdersManagementCommand}"
+                    IsVisible="{Binding CanManageOrders}">
+
+                <StackPanel Orientation="Horizontal" Spacing="2">
+                    <materialsIcon:MaterialIcon Kind="ViewList"/>
+                    <TextBlock Text="Меню заказов"/>
+                </StackPanel>
+
+            </Button>
             
             <Button  Margin="20"
                      CornerRadius="20"
