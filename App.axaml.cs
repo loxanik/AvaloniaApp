@@ -30,6 +30,8 @@ public partial class App : Application
 
         services.AddDbContext<ShopContext>(options =>
             options.UseNpgsql("Host=localhost;Database=Shop;Username=postgres;Password=0000"));
+        services.AddDbContextFactory<ShopContext>(options =>
+            options.UseNpgsql("Host=localhost;Database=Shop;Username=postgres;Password=0000"));
         
         services.AddSingleton<IAuthService, AuthService>();
         services.AddSingleton<IProductService, ProductService>();
@@ -56,7 +58,8 @@ public partial class App : Application
         // Проект без миграций: убедимся, что таблицы корзины существуют
         using (var scope = Ioc.Default.CreateScope())
         {
-            var ctx = scope.ServiceProvider.GetRequiredService<ShopContext>();
+            var ctxFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<ShopContext>>();
+            using var ctx = ctxFactory.CreateDbContext();
             CartSchemaInitializer.EnsureCartTablesCreated(ctx);
         }
         

@@ -13,6 +13,8 @@ public partial class HistoryCost
 
     public decimal OldCost { get; set; }
 
+    public DateOnly Date { get; set; }
+
     public virtual ICollection<ProductOrder> ProductOrders { get; set; } = new List<ProductOrder>();
 
     public virtual ShopProduct ShopProduct { get; set; } = null!;

@@ -15,11 +15,11 @@ public partial class ShopContext : DbContext
     {
     }
 
-    public virtual DbSet<Category> Categories { get; set; }
-
     public virtual DbSet<Cart> Carts { get; set; }
 
     public virtual DbSet<CartItem> CartItems { get; set; }
+
+    public virtual DbSet<Category> Categories { get; set; }
 
     public virtual DbSet<Country> Countries { get; set; }
 
@@ -30,6 +30,8 @@ public partial class ShopContext : DbContext
     public virtual DbSet<Order> Orders { get; set; }
 
     public virtual DbSet<Parameter> Parameters { get; set; }
+
+    public virtual DbSet<PaymentMethodId> PaymentMethodIds { get; set; }
 
     public virtual DbSet<PersonalInfo> PersonalInfos { get; set; }
 
@@ -64,13 +66,18 @@ public partial class ShopContext : DbContext
             entity.HasIndex(e => e.UserId, "cart_user_unique").IsUnique();
 
             entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("now()")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("createdAt");
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("now()")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("updatedAt");
             entity.Property(e => e.UserId).HasColumnName("userId");
-            entity.Property(e => e.CreatedAt).HasColumnName("createdAt");
-            entity.Property(e => e.UpdatedAt).HasColumnName("updatedAt");
 
-            entity.HasOne(d => d.User).WithMany()
-                .HasForeignKey(d => d.UserId)
-                .OnDelete(DeleteBehavior.Cascade)
+            entity.HasOne(d => d.User).WithOne(p => p.Cart)
+                .HasForeignKey<Cart>(d => d.UserId)
                 .HasConstraintName("cart_user_id");
         });
 
@@ -84,19 +91,23 @@ public partial class ShopContext : DbContext
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.CartId).HasColumnName("cartId");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("now()")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("createdAt");
             entity.Property(e => e.ProductId).HasColumnName("productId");
             entity.Property(e => e.Quantity).HasColumnName("quantity");
-            entity.Property(e => e.CreatedAt).HasColumnName("createdAt");
-            entity.Property(e => e.UpdatedAt).HasColumnName("updatedAt");
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("now()")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("updatedAt");
 
             entity.HasOne(d => d.Cart).WithMany(p => p.CartItems)
                 .HasForeignKey(d => d.CartId)
-                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("cartitem_cart_id");
 
-            entity.HasOne(d => d.Product).WithMany()
+            entity.HasOne(d => d.Product).WithMany(p => p.CartItems)
                 .HasForeignKey(d => d.ProductId)
-                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("cartitem_product_id");
         });
 
@@ -131,6 +142,9 @@ public partial class ShopContext : DbContext
             entity.ToTable("HistoryCost");
 
             entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Date)
+                .HasDefaultValueSql("CURRENT_DATE")
+                .HasColumnName("date");
             entity.Property(e => e.NewCost)
                 .HasPrecision(10, 2)
                 .HasColumnName("newCost");
@@ -163,11 +177,27 @@ public partial class ShopContext : DbContext
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.ClientId).HasColumnName("clientId");
             entity.Property(e => e.Date).HasColumnName("date");
+            entity.Property(e => e.EmployeeId)
+                .HasDefaultValue(5)
+                .HasColumnName("employeeId");
+            entity.Property(e => e.PaymentMethodId)
+                .HasDefaultValue(1)
+                .HasColumnName("paymentMethodId");
             entity.Property(e => e.StatusId).HasColumnName("statusId");
 
-            entity.HasOne(d => d.Client).WithMany(p => p.Orders)
+            entity.HasOne(d => d.Client).WithMany(p => p.OrderClients)
                 .HasForeignKey(d => d.ClientId)
                 .HasConstraintName("user_id");
+
+            entity.HasOne(d => d.Employee).WithMany(p => p.OrderEmployees)
+                .HasForeignKey(d => d.EmployeeId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("order_employee");
+
+            entity.HasOne(d => d.PaymentMethod).WithMany(p => p.Orders)
+                .HasForeignKey(d => d.PaymentMethodId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("order_payment");
 
             entity.HasOne(d => d.Status).WithMany(p => p.Orders)
                 .HasForeignKey(d => d.StatusId)
@@ -197,6 +227,18 @@ public partial class ShopContext : DbContext
             entity.HasOne(d => d.Unit).WithMany(p => p.Parameters)
                 .HasForeignKey(d => d.UnitId)
                 .HasConstraintName("unit_id");
+        });
+
+        modelBuilder.Entity<PaymentMethodId>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PaymentMethodId_pkey");
+
+            entity.ToTable("PaymentMethodId");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Name)
+                .HasMaxLength(30)
+                .HasColumnName("name");
         });
 
         modelBuilder.Entity<PersonalInfo>(entity =>
@@ -366,6 +408,9 @@ public partial class ShopContext : DbContext
             entity.HasIndex(e => e.Login, "login_unique").IsUnique();
 
             entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.IsDismissed)
+                .HasDefaultValue(false)
+                .HasColumnName("isDismissed");
             entity.Property(e => e.Login)
                 .HasMaxLength(15)
                 .HasColumnName("login");

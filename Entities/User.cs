@@ -13,7 +13,13 @@ public partial class User
 
     public int RoleId { get; set; }
 
-    public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
+    public bool IsDismissed { get; set; }
+
+    public virtual Cart? Cart { get; set; }
+
+    public virtual ICollection<Order> OrderClients { get; set; } = new List<Order>();
+
+    public virtual ICollection<Order> OrderEmployees { get; set; } = new List<Order>();
 
     public virtual ICollection<PersonalInfo> PersonalInfos { get; set; } = new List<PersonalInfo>();
 

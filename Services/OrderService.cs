@@ -20,13 +20,19 @@ public class OrderService(ShopContext shopContext, IUserContext userContext) : I
     private readonly ShopContext _shopContext = shopContext;
     private readonly IUserContext _userContext = userContext;
 
-    public async Task<bool> CreateOrderFromMyCartAsync()
+    public async Task<bool> CreateOrderFromMyCartAsync(int paymentMethodId)
     {
         await using var transaction = await _shopContext.Database.BeginTransactionAsync();
         try
         {
             var userId = _userContext.CurrentUser?.Id;
             if (userId is null)
+                return false;
+
+            var paymentMethodExists = await _shopContext.PaymentMethodIds
+                .AsNoTracking()
+                .AnyAsync(pm => pm.Id == paymentMethodId);
+            if (!paymentMethodExists)
                 return false;
 
             var cart = await _shopContext.Carts
@@ -89,7 +95,8 @@ public class OrderService(ShopContext shopContext, IUserContext userContext) : I
             {
                 ClientId = userId.Value,
                 Date = DateOnly.FromDateTime(DateTime.Today),
-                StatusId = statusId
+                StatusId = statusId,
+                PaymentMethodId = paymentMethodId
             };
             _shopContext.Orders.Add(order);
             await _shopContext.SaveChangesAsync();
@@ -112,7 +119,7 @@ public class OrderService(ShopContext shopContext, IUserContext userContext) : I
             }
 
             _shopContext.CartItems.RemoveRange(cartItems);
-            cart.UpdatedAt = DateTime.UtcNow;
+            cart.UpdatedAt = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
 
             await _shopContext.SaveChangesAsync();
             await transaction.CommitAsync();
@@ -122,6 +129,27 @@ public class OrderService(ShopContext shopContext, IUserContext userContext) : I
         {
             AppLogger.LogError(e, "Create order from cart error");
             return false;
+        }
+    }
+
+    public async Task<List<PaymentMethodOptionDTO>> GetPaymentMethodsAsync()
+    {
+        try
+        {
+            return await _shopContext.PaymentMethodIds
+                .AsNoTracking()
+                .OrderBy(pm => pm.Id)
+                .Select(pm => new PaymentMethodOptionDTO
+                {
+                    Id = pm.Id,
+                    Name = pm.Name
+                })
+                .ToListAsync();
+        }
+        catch (Exception e)
+        {
+            AppLogger.LogError(e, "Get payment methods error");
+            return [];
         }
     }
 

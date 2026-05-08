@@ -13,7 +13,15 @@ public partial class Order
 
     public int StatusId { get; set; }
 
+    public int PaymentMethodId { get; set; }
+
+    public int EmployeeId { get; set; }
+
     public virtual User Client { get; set; } = null!;
+
+    public virtual User Employee { get; set; } = null!;
+
+    public virtual PaymentMethodId PaymentMethod { get; set; } = null!;
 
     public virtual ICollection<ProductOrder> ProductOrders { get; set; } = new List<ProductOrder>();
 

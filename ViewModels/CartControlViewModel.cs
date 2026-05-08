@@ -31,6 +31,12 @@ public partial class CartControlViewModel : ViewModelBase
     [ObservableProperty]
     private string _checkoutInfo = string.Empty;
 
+    [ObservableProperty]
+    private ObservableCollection<PaymentMethodOptionDTO> _paymentMethods = [];
+
+    [ObservableProperty]
+    private int _selectedPaymentMethodId;
+
     public CartControlViewModel(ICartService cartService, IOrderService orderService, IUserContext userContext)
     {
         _cartService = cartService;
@@ -38,6 +44,7 @@ public partial class CartControlViewModel : ViewModelBase
         _userContext = userContext;
         WeakReferenceMessenger.Default.Register<CartChangedMessage>(this, (_, _) => _ = RefreshAsync());
         _userContext.PropertyChanged += UserContextOnPropertyChanged;
+        _ = LoadPaymentMethodsAsync();
         _ = RefreshAsync();
     }
 
@@ -105,10 +112,32 @@ public partial class CartControlViewModel : ViewModelBase
     private async Task CheckoutAsync()
     {
         CheckoutInfo = string.Empty;
-        var success = await _orderService.CreateOrderFromMyCartAsync();
+        if (SelectedPaymentMethodId <= 0)
+        {
+            CheckoutInfo = "Выберите способ оплаты.";
+            return;
+        }
+
+        var success = await _orderService.CreateOrderFromMyCartAsync(SelectedPaymentMethodId);
         CheckoutInfo = success
             ? "Заказ оформлен. Ожидайте подтверждения оплаты менеджером."
             : "Не удалось оформить заказ. Проверьте корзину и остатки товара.";
         await RefreshAsync();
+    }
+
+    private async Task LoadPaymentMethodsAsync()
+    {
+        try
+        {
+            var methods = await _orderService.GetPaymentMethodsAsync();
+            PaymentMethods = new ObservableCollection<PaymentMethodOptionDTO>(methods);
+
+            if (SelectedPaymentMethodId == 0 && PaymentMethods.Count > 0)
+                SelectedPaymentMethodId = PaymentMethods[0].Id;
+        }
+        catch (Exception e)
+        {
+            AppLogger.LogError(e, "Load payment methods viewmodel error");
+        }
     }
 }

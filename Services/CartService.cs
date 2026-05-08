@@ -9,20 +9,28 @@ using Shop.Utils;
 
 namespace Shop.Services;
 
-public class CartService(ShopContext shopContext, IUserContext userContext, IImageService imageService) : ICartService
+public class CartService : ICartService
 {
-    private readonly ShopContext _shopContext = shopContext;
-    private readonly IUserContext _userContext = userContext;
-    private readonly IImageService _imageService = imageService;
+    private readonly IDbContextFactory<ShopContext> _contextFactory;
+    private readonly IUserContext _userContext;
+    private readonly IImageService _imageService;
+
+    public CartService(IDbContextFactory<ShopContext> contextFactory, IUserContext userContext, IImageService imageService)
+    {
+        _contextFactory = contextFactory;
+        _userContext = userContext;
+        _imageService = imageService;
+    }
 
     public async Task<CartDTO?> GetMyCartAsync()
     {
         try
         {
+            await using var shopContext = await _contextFactory.CreateDbContextAsync();
             var userId = _userContext.CurrentUser?.Id;
             if (userId is null) return new CartDTO();
 
-            var cartId = await _shopContext.Carts
+            var cartId = await shopContext.Carts
                 .AsNoTracking()
                 .Where(c => c.UserId == userId.Value)
                 .Select(c => (int?)c.Id)
@@ -30,7 +38,7 @@ public class CartService(ShopContext shopContext, IUserContext userContext, IIma
 
             if (cartId is null) return new CartDTO();
 
-            return await BuildCartDtoAsync(cartId.Value);
+            return await BuildCartDtoAsync(shopContext, cartId.Value);
         }
         catch (Exception e)
         {
@@ -43,97 +51,104 @@ public class CartService(ShopContext shopContext, IUserContext userContext, IIma
     {
         if (quantity <= 0) return await GetMyCartAsync();
 
-        await using var transaction = await _shopContext.Database.BeginTransactionAsync();
+        await using var shopContext = await _contextFactory.CreateDbContextAsync();
+        await using var transaction = await shopContext.Database.BeginTransactionAsync();
         try
         {
             var userId = _userContext.CurrentUser?.Id;
             if (userId is null) return new CartDTO();
 
-            var cart = await _shopContext.Carts
-                .Include(c => c.CartItems)
-                .FirstOrDefaultAsync(c => c.UserId == userId.Value);
-
+            var cart = await GetOrCreateCartAsync(shopContext, userId.Value);
             if (cart == null)
             {
-                cart = new Cart
-                {
-                    UserId = userId.Value,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
-                };
-
-                _shopContext.Carts.Add(cart);
-                await _shopContext.SaveChangesAsync();
+                AppLogger.LogError(new InvalidOperationException("Cart was not resolved"), $"Add to cart error: userId={userId}, productId={productId}");
+                return new CartDTO();
             }
 
-            var available = await GetAvailableQuantityAsync(productId);
-            if (available <= 0) return await BuildCartDtoAsync(cart.Id);
+            var available = await GetAvailableQuantityAsync(shopContext, productId);
+            if (available <= 0) return await BuildCartDtoAsync(shopContext, cart.Id);
 
-            var existing = cart.CartItems.FirstOrDefault(i => i.ProductId == productId);
+            var existing = await shopContext.CartItems
+                .FirstOrDefaultAsync(i => i.CartId == cart.Id && i.ProductId == productId);
             if (existing == null)
             {
                 var toAdd = Math.Min(quantity, available);
-                cart.CartItems.Add(new CartItem
+                shopContext.CartItems.Add(new CartItem
                 {
                     CartId = cart.Id,
                     ProductId = productId,
                     Quantity = toAdd,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
+                    CreatedAt = GetDbTimestamp(),
+                    UpdatedAt = GetDbTimestamp()
                 });
             }
             else
             {
                 existing.Quantity = Math.Min(existing.Quantity + quantity, available);
-                existing.UpdatedAt = DateTime.UtcNow;
+                existing.UpdatedAt = GetDbTimestamp();
             }
 
-            cart.UpdatedAt = DateTime.UtcNow;
-            await _shopContext.SaveChangesAsync();
+            cart.UpdatedAt = GetDbTimestamp();
+            try
+            {
+                await shopContext.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                // Handle unique(cartId, productId) race on fast double-clicks.
+                var item = await shopContext.CartItems
+                    .FirstOrDefaultAsync(i => i.CartId == cart.Id && i.ProductId == productId);
+                if (item == null) throw;
+
+                item.Quantity = Math.Min(item.Quantity + quantity, available);
+                item.UpdatedAt = GetDbTimestamp();
+                await shopContext.SaveChangesAsync();
+            }
             await transaction.CommitAsync();
 
-            return await BuildCartDtoAsync(cart.Id);
+            return await BuildCartDtoAsync(shopContext, cart.Id);
         }
         catch (Exception e)
         {
-            AppLogger.LogError(e, $"Add to cart error: productId={productId}");
+            AppLogger.LogError(e, $"Add to cart error: productId={productId}; inner={e.InnerException?.Message}");
             return null;
         }
     }
 
     public async Task<CartDTO?> SetMyCartItemQuantityAsync(int productId, int quantity)
     {
-        await using var transaction = await _shopContext.Database.BeginTransactionAsync();
+        await using var shopContext = await _contextFactory.CreateDbContextAsync();
+        await using var transaction = await shopContext.Database.BeginTransactionAsync();
         try
         {
             var userId = _userContext.CurrentUser?.Id;
             if (userId is null) return new CartDTO();
 
-            var cart = await _shopContext.Carts
+            var cart = await shopContext.Carts
                 .Include(c => c.CartItems)
                 .FirstOrDefaultAsync(c => c.UserId == userId.Value);
 
             if (cart == null) return new CartDTO();
 
             var item = cart.CartItems.FirstOrDefault(i => i.ProductId == productId);
-            if (item == null) return await BuildCartDtoAsync(cart.Id);
+            if (item == null) return await BuildCartDtoAsync(shopContext, cart.Id);
 
             if (quantity <= 0)
             {
-                _shopContext.CartItems.Remove(item);
+                shopContext.CartItems.Remove(item);
             }
             else
             {
-                var available = await GetAvailableQuantityAsync(productId);
+                var available = await GetAvailableQuantityAsync(shopContext, productId);
                 item.Quantity = Math.Min(quantity, available);
-                item.UpdatedAt = DateTime.UtcNow;
+                item.UpdatedAt = GetDbTimestamp();
             }
 
-            cart.UpdatedAt = DateTime.UtcNow;
-            await _shopContext.SaveChangesAsync();
+            cart.UpdatedAt = GetDbTimestamp();
+            await shopContext.SaveChangesAsync();
             await transaction.CommitAsync();
 
-            return await BuildCartDtoAsync(cart.Id);
+            return await BuildCartDtoAsync(shopContext, cart.Id);
         }
         catch (Exception e)
         {
@@ -144,13 +159,14 @@ public class CartService(ShopContext shopContext, IUserContext userContext, IIma
 
     public async Task<CartDTO?> RemoveFromMyCartAsync(int productId)
     {
-        await using var transaction = await _shopContext.Database.BeginTransactionAsync();
+        await using var shopContext = await _contextFactory.CreateDbContextAsync();
+        await using var transaction = await shopContext.Database.BeginTransactionAsync();
         try
         {
             var userId = _userContext.CurrentUser?.Id;
             if (userId is null) return new CartDTO();
 
-            var cart = await _shopContext.Carts
+            var cart = await shopContext.Carts
                 .Include(c => c.CartItems)
                 .FirstOrDefaultAsync(c => c.UserId == userId.Value);
 
@@ -158,13 +174,13 @@ public class CartService(ShopContext shopContext, IUserContext userContext, IIma
 
             var item = cart.CartItems.FirstOrDefault(i => i.ProductId == productId);
             if (item != null)
-                _shopContext.CartItems.Remove(item);
+                shopContext.CartItems.Remove(item);
 
-            cart.UpdatedAt = DateTime.UtcNow;
-            await _shopContext.SaveChangesAsync();
+            cart.UpdatedAt = GetDbTimestamp();
+            await shopContext.SaveChangesAsync();
             await transaction.CommitAsync();
 
-            return await BuildCartDtoAsync(cart.Id);
+            return await BuildCartDtoAsync(shopContext, cart.Id);
         }
         catch (Exception e)
         {
@@ -175,23 +191,24 @@ public class CartService(ShopContext shopContext, IUserContext userContext, IIma
 
     public async Task<CartDTO?> ClearMyCartAsync()
     {
-        await using var transaction = await _shopContext.Database.BeginTransactionAsync();
+        await using var shopContext = await _contextFactory.CreateDbContextAsync();
+        await using var transaction = await shopContext.Database.BeginTransactionAsync();
         try
         {
             var userId = _userContext.CurrentUser?.Id;
             if (userId is null) return new CartDTO();
 
-            var cart = await _shopContext.Carts
+            var cart = await shopContext.Carts
                 .Include(c => c.CartItems)
                 .FirstOrDefaultAsync(c => c.UserId == userId.Value);
 
             if (cart == null) return new CartDTO();
 
             if (cart.CartItems.Count != 0)
-                _shopContext.CartItems.RemoveRange(cart.CartItems);
+                shopContext.CartItems.RemoveRange(cart.CartItems);
 
-            cart.UpdatedAt = DateTime.UtcNow;
-            await _shopContext.SaveChangesAsync();
+            cart.UpdatedAt = GetDbTimestamp();
+            await shopContext.SaveChangesAsync();
             await transaction.CommitAsync();
 
             return new CartDTO();
@@ -203,21 +220,44 @@ public class CartService(ShopContext shopContext, IUserContext userContext, IIma
         }
     }
 
-    private async Task<int> GetAvailableQuantityAsync(int productId)
+    private static async Task<int> GetAvailableQuantityAsync(ShopContext shopContext, int productId)
     {
-        return await _shopContext.ShopProducts
+        return await shopContext.ShopProducts
             .AsNoTracking()
             .Where(sp => sp.ProductId == productId)
-            .Select(sp => (int?)sp.Count)
-            .FirstOrDefaultAsync() ?? 0;
+            .SumAsync(sp => (int?)sp.Count) ?? 0;
     }
 
-    private async Task<CartDTO> BuildCartDtoAsync(int cartId)
+    private static async Task<Cart?> GetOrCreateCartAsync(ShopContext shopContext, int userId)
     {
-        var items = await _shopContext.CartItems
+        try
+        {
+            await shopContext.Database.ExecuteSqlInterpolatedAsync($"""
+                INSERT INTO "Cart" ("userId")
+                VALUES ({userId})
+                ON CONFLICT ("userId") DO NOTHING;
+                """);
+
+            return await shopContext.Carts.FirstOrDefaultAsync(c => c.UserId == userId);
+        }
+        catch (Exception e)
+        {
+            AppLogger.LogError(e, $"GetOrCreateCartAsync failed: userId={userId}; inner={e.InnerException?.Message}");
+            return null;
+        }
+    }
+
+    private static DateTime GetDbTimestamp()
+    {
+        return DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
+    }
+
+    private async Task<CartDTO> BuildCartDtoAsync(ShopContext shopContext, int cartId)
+    {
+        var items = await shopContext.CartItems
             .AsNoTracking()
             .Where(i => i.CartId == cartId)
-            .Join(_shopContext.Products.AsNoTracking().Include(p => p.Image).Include(p => p.ShopProducts).ThenInclude(sp => sp.HistoryCosts),
+            .Join(shopContext.Products.AsNoTracking().Include(p => p.Image).Include(p => p.ShopProducts).ThenInclude(sp => sp.HistoryCosts),
                 i => i.ProductId,
                 p => p.Id,
                 (i, p) => new { i, p })
@@ -233,8 +273,7 @@ public class CartService(ShopContext shopContext, IUserContext userContext, IIma
                     .Select(h => h.NewCost)
                     .FirstOrDefault(),
                 Available = x.p.ShopProducts
-                    .Select(sp => (int?)sp.Count)
-                    .FirstOrDefault() ?? 0
+                    .Sum(sp => (int?)sp.Count) ?? 0
             })
             .ToListAsync();
 

@@ -19,6 +19,8 @@ public partial class Product
 
     public bool IsDeleted { get; set; }
 
+    public virtual ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();
+
     public virtual Category Category { get; set; } = null!;
 
     public virtual Image? Image { get; set; }

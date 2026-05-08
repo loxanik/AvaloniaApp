@@ -223,8 +223,11 @@ public partial class ProductsCatalogControlViewModel : ViewModelBase
         {
             if (parameter is not int productId) return;
             var cart = await _cartService.AddToMyCartAsync(productId, 1);
-            if (cart != null)
-                WeakReferenceMessenger.Default.Send(new CartChangedMessage());
+            // Even when DTO building fails, DB write may already succeed.
+            // Force cart refresh to keep UI in sync with storage state.
+            WeakReferenceMessenger.Default.Send(new CartChangedMessage());
+            if (cart == null)
+                AppLogger.LogError(new InvalidOperationException("Cart update returned null"), $"AddToCartAsync productId={productId}");
         }
         catch (Exception e)
         {

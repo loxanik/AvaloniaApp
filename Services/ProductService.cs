@@ -91,8 +91,7 @@ public class ProductService : IProductService
                     Image = x.Product.Image != null ? x.Product.Image.Image1 : null,
                     Price = x.Price,
                     AvailableQuantity = x.Product.ShopProducts
-                        .Select(sp => (int?)sp.Count)
-                        .FirstOrDefault() ?? 0
+                        .Sum(sp => (int?)sp.Count) ?? 0
                 }).ToListAsync();
 
             foreach (var product in items)
@@ -227,7 +226,9 @@ public class ProductService : IProductService
                             Unit = param.Unit.Name
                         }).ToList(),
                     IsDeleted = p.IsDeleted,
-                    Count = p.ShopProducts.FirstOrDefault()!.Count
+                    Count = p.ShopProducts
+                        .Select(sp => (int?)sp.Count)
+                        .Sum() ?? 0
                 }).FirstOrDefaultAsync();
 
             if (product != null)

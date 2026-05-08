@@ -1,4 +1,5 @@
-using System;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Shop.Entities;
 
@@ -20,4 +21,3 @@ public partial class CartItem
 
     public virtual Product Product { get; set; } = null!;
 }
-
