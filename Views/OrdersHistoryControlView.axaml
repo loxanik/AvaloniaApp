@@ -33,13 +33,15 @@
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Border Margin="0,0,0,8" Padding="10" Background="White" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="10">
-                                <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="6">
+                                <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="6">
                                     <Grid ColumnDefinitions="Auto,Auto,*,Auto">
                                         <TextBlock FontWeight="SemiBold" Text="{Binding OrderId, StringFormat=Заказ #{0}}"/>
                                         <TextBlock Grid.Column="1" Margin="10,0,0,0" Text="{Binding DateDisplay}"/>
                                         <TextBlock Grid.Column="3" Text="{Binding StatusDisplayName}" FontWeight="SemiBold"/>
                                     </Grid>
-                                    <ItemsControl Grid.Row="1" ItemsSource="{Binding Items}">
+                                    <TextBlock Grid.Row="1" Text="{Binding PaymentMethodName, StringFormat=Способ оплаты: {0}}" Foreground="Gray" FontSize="12"/>
+                                    <TextBlock Grid.Row="2" Text="{Binding EmployeeName, StringFormat=Сотрудник: {0}}" Foreground="Gray" FontSize="12"/>
+                                    <ItemsControl Grid.Row="3" ItemsSource="{Binding Items}">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
                                                 <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,2,0,2">
@@ -50,7 +52,7 @@
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
-                                    <TextBlock Grid.Row="2" HorizontalAlignment="Right" FontWeight="SemiBold"
+                                    <TextBlock Grid.Row="4" HorizontalAlignment="Right" FontWeight="SemiBold"
                                                Text="{Binding Total, StringFormat=Итого: {0} ₽}"/>
                                 </Grid>
                             </Border>

@@ -37,6 +37,12 @@ public partial class CartControlViewModel : ViewModelBase
     [ObservableProperty]
     private int _selectedPaymentMethodId;
 
+    [ObservableProperty]
+    private ObservableCollection<EmployeeDTO> _employees = [];
+
+    [ObservableProperty]
+    private int _selectedEmployeeId;
+
     public CartControlViewModel(ICartService cartService, IOrderService orderService, IUserContext userContext)
     {
         _cartService = cartService;
@@ -45,6 +51,7 @@ public partial class CartControlViewModel : ViewModelBase
         WeakReferenceMessenger.Default.Register<CartChangedMessage>(this, (_, _) => _ = RefreshAsync());
         _userContext.PropertyChanged += UserContextOnPropertyChanged;
         _ = LoadPaymentMethodsAsync();
+        _ = LoadEmployeesAsync();
         _ = RefreshAsync();
     }
 
@@ -118,7 +125,13 @@ public partial class CartControlViewModel : ViewModelBase
             return;
         }
 
-        var success = await _orderService.CreateOrderFromMyCartAsync(SelectedPaymentMethodId);
+        if (SelectedEmployeeId <= 0)
+        {
+            CheckoutInfo = "Выберите сотрудника.";
+            return;
+        }
+
+        var success = await _orderService.CreateOrderFromMyCartAsync(SelectedPaymentMethodId, SelectedEmployeeId);
         CheckoutInfo = success
             ? "Заказ оформлен. Ожидайте подтверждения оплаты менеджером."
             : "Не удалось оформить заказ. Проверьте корзину и остатки товара.";
@@ -138,6 +151,22 @@ public partial class CartControlViewModel : ViewModelBase
         catch (Exception e)
         {
             AppLogger.LogError(e, "Load payment methods viewmodel error");
+        }
+    }
+
+    private async Task LoadEmployeesAsync()
+    {
+        try
+        {
+            var employees = await _orderService.GetEmployeesAsync();
+            Employees = new ObservableCollection<EmployeeDTO>(employees);
+
+            if (SelectedEmployeeId == 0 && Employees.Count > 0)
+                SelectedEmployeeId = Employees[0].Id;
+        }
+        catch (Exception e)
+        {
+            AppLogger.LogError(e, "Load employees viewmodel error");
         }
     }
 }

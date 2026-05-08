@@ -20,7 +20,7 @@ public class OrderService(ShopContext shopContext, IUserContext userContext) : I
     private readonly ShopContext _shopContext = shopContext;
     private readonly IUserContext _userContext = userContext;
 
-    public async Task<bool> CreateOrderFromMyCartAsync(int paymentMethodId)
+    public async Task<bool> CreateOrderFromMyCartAsync(int paymentMethodId, int employeeId)
     {
         await using var transaction = await _shopContext.Database.BeginTransactionAsync();
         try
@@ -33,6 +33,12 @@ public class OrderService(ShopContext shopContext, IUserContext userContext) : I
                 .AsNoTracking()
                 .AnyAsync(pm => pm.Id == paymentMethodId);
             if (!paymentMethodExists)
+                return false;
+
+            var employeeExists = await _shopContext.Users
+                .AsNoTracking()
+                .AnyAsync(u => u.Id == employeeId && !u.IsDismissed);
+            if (!employeeExists)
                 return false;
 
             var cart = await _shopContext.Carts
@@ -96,7 +102,8 @@ public class OrderService(ShopContext shopContext, IUserContext userContext) : I
                 ClientId = userId.Value,
                 Date = DateOnly.FromDateTime(DateTime.Today),
                 StatusId = statusId,
-                PaymentMethodId = paymentMethodId
+                PaymentMethodId = paymentMethodId,
+                EmployeeId = employeeId
             };
             _shopContext.Orders.Add(order);
             await _shopContext.SaveChangesAsync();
@@ -153,6 +160,31 @@ public class OrderService(ShopContext shopContext, IUserContext userContext) : I
         }
     }
 
+    public async Task<List<EmployeeDTO>> GetEmployeesAsync()
+    {
+        try
+        {
+            return await _shopContext.Users
+                .AsNoTracking()
+                .Where(u => !u.IsDismissed)
+                .Include(u => u.PersonalInfos)
+                .OrderBy(u => u.Login)
+                .Select(u => new EmployeeDTO
+                {
+                    Id = u.Id,
+                    Name = u.PersonalInfos.FirstOrDefault() != null 
+                        ? $"{u.PersonalInfos.First().Name} {u.PersonalInfos.First().Surname}"
+                        : u.Login
+                })
+                .ToListAsync();
+        }
+        catch (Exception e)
+        {
+            AppLogger.LogError(e, "Get employees error");
+            return [];
+        }
+    }
+
     public async Task<List<OrderSummaryDTO>> GetMyOrdersAsync()
     {
         try
@@ -166,6 +198,9 @@ public class OrderService(ShopContext shopContext, IUserContext userContext) : I
                 .Where(o => o.ClientId == userId.Value)
                 .Include(o => o.Status)
                 .Include(o => o.Client)
+                .Include(o => o.PaymentMethod)
+                .Include(o => o.Employee)
+                    .ThenInclude(e => e.PersonalInfos)
                 .Include(o => o.ProductOrders)
                     .ThenInclude(po => po.Cost)
                 .Include(o => o.ProductOrders)
@@ -195,6 +230,9 @@ public class OrderService(ShopContext shopContext, IUserContext userContext) : I
                 .AsNoTracking()
                 .Include(o => o.Status)
                 .Include(o => o.Client)
+                .Include(o => o.PaymentMethod)
+                .Include(o => o.Employee)
+                    .ThenInclude(e => e.PersonalInfos)
                 .Include(o => o.ProductOrders)
                     .ThenInclude(po => po.Cost)
                 .Include(o => o.ProductOrders)
@@ -271,6 +309,11 @@ public class OrderService(ShopContext shopContext, IUserContext userContext) : I
     private static OrderSummaryDTO MapToSummaryDto(Order order)
     {
         var statusName = order.Status?.Name ?? string.Empty;
+        var employee = order.Employee;
+        var employeeName = employee?.PersonalInfos.FirstOrDefault() != null 
+            ? $"{employee.PersonalInfos.First().Name} {employee.PersonalInfos.First().Surname}"
+            : employee?.Login ?? string.Empty;
+            
         return new OrderSummaryDTO
         {
             OrderId = order.Id,
@@ -278,6 +321,8 @@ public class OrderService(ShopContext shopContext, IUserContext userContext) : I
             StatusName = statusName,
             StatusDisplayName = LocalizeStatus(statusName),
             ClientLogin = order.Client?.Login ?? string.Empty,
+            PaymentMethodName = order.PaymentMethod?.Name ?? string.Empty,
+            EmployeeName = employeeName,
             Items = order.ProductOrders.Select(po => new OrderItemDTO
             {
                 ProductName = po.ShopProduct?.Product?.Name ?? "Товар",

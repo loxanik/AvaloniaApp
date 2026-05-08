@@ -12,6 +12,8 @@ public class OrderSummaryDTO
     public string StatusName { get; set; } = string.Empty;
     public string StatusDisplayName { get; set; } = string.Empty;
     public string ClientLogin { get; set; } = string.Empty;
+    public string PaymentMethodName { get; set; } = string.Empty;
+    public string EmployeeName { get; set; } = string.Empty;
     public List<OrderItemDTO> Items { get; set; } = [];
     public string DateDisplay => Date.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture);
     public int ItemsCount => Items.Sum(i => i.Quantity);

@@ -33,14 +33,15 @@
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Border Margin="0,0,0,8" Padding="10" Background="White" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="10">
-                                <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="6">
+                                <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="6">
                                     <Grid ColumnDefinitions="Auto,Auto,*,Auto">
                                         <TextBlock FontWeight="SemiBold" Text="{Binding OrderId, StringFormat=Заказ #{0}}"/>
                                         <TextBlock Grid.Column="1" Margin="10,0,0,0" Text="{Binding DateDisplay}"/>
                                         <TextBlock Grid.Column="3" Text="{Binding StatusDisplayName}" FontWeight="SemiBold"/>
                                     </Grid>
                                     <TextBlock Grid.Row="1" Opacity="0.8" Text="{Binding ClientLogin, StringFormat=Клиент: {0}}"/>
-                                    <ItemsControl Grid.Row="2" ItemsSource="{Binding Items}">
+                                    <TextBlock Grid.Row="2" Opacity="0.8" Text="{Binding EmployeeName, StringFormat=Сотрудник: {0}}"/>
+                                    <ItemsControl Grid.Row="3" ItemsSource="{Binding Items}">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
                                                 <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,2,0,2">
@@ -51,7 +52,7 @@
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
-                                    <Grid Grid.Row="3" ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="8">
+                                    <Grid Grid.Row="4" ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="8">
                                         <TextBlock FontWeight="SemiBold" VerticalAlignment="Center"
                                                    Text="{Binding Total, StringFormat=Итого: {0} ₽}"/>
                                         <Button Grid.Column="1"
