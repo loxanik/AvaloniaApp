@@ -37,6 +37,7 @@ public partial class App : Application
         services.AddSingleton<IProductService, ProductService>();
         services.AddSingleton<ICartService, CartService>();
         services.AddSingleton<IOrderService, OrderService>();
+        services.AddSingleton<IUserService, UserService>();
         services.AddSingleton<IUserContext, UserContext>();
         services.AddSingleton<ILocalizationHelper, LocalizationHelper>();
         services.AddSingleton<IImageService, ImageService>();
@@ -45,6 +46,7 @@ public partial class App : Application
         services.AddSingleton<ProductsCatalogControlViewModel>();
         services.AddSingleton<UserProfileControlViewModel>();
         services.AddSingleton<CartControlViewModel>();
+        services.AddSingleton<UserManagementControlViewModel>();
         services.AddSingleton<DeletedProductsListControlViewModel>();
         
         services.AddTransient<LoginControlViewModel>();

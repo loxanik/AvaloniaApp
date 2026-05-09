@@ -125,6 +125,19 @@
                 </StackPanel>
 
             </Button>
+
+            <Button Margin="20"
+                    CornerRadius="20"
+                    MinHeight="30"
+                    Command="{Binding OpenUserManagementCommand}"
+                    IsVisible="{Binding CanEdit}">
+
+                <StackPanel Orientation="Horizontal" Spacing="2">
+                    <materialsIcon:MaterialIcon Kind="People"/>
+                    <TextBlock Text="Управление персоналом"/>
+                </StackPanel>
+
+            </Button>
             
             <Button  Margin="20"
                      CornerRadius="20"

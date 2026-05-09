@@ -68,4 +68,10 @@ public partial class UserProfileControlViewModel : ViewModelBase
     {
         WeakReferenceMessenger.Default.Send(new ChangeViewModelMessage(typeof(OrdersManagementControlViewModel)));
     }
+
+    [RelayCommand]
+    private void OpenUserManagement()
+    {
+        WeakReferenceMessenger.Default.Send(new ChangeViewModelMessage(typeof(UserManagementControlViewModel)));
+    }
 }

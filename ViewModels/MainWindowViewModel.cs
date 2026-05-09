@@ -21,6 +21,8 @@ public partial class MainWindowViewModel : ViewModelBase
     
     [ObservableProperty]
     private object? _currentViewModel;
+
+    public IUserContext UserContext { get; private set; }
     
     [ObservableProperty]
     private object? _currentProfileViewModel;
@@ -44,10 +46,13 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public bool IsCartActive => SelectedNavigationSection == NavigationSection.Cart;
 
+    public bool IsUserManagementActive => SelectedNavigationSection == NavigationSection.UserManagement;
+
     public GridLength NavHeight => IsNavVisible ? new GridLength(0.1, GridUnitType.Star) : new GridLength(0);
     public MainWindowViewModel(IUserContext userContext)
     {
         _userContext = userContext;
+        UserContext = userContext;
         
         CurrentViewModel = Ioc.Default.GetRequiredService<LoginControlViewModel>();
         CurrentProfileViewModel = Ioc.Default.GetRequiredService<UserProfileControlViewModel>();
@@ -131,6 +136,7 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             NavigationSection.Cart => Ioc.Default.GetRequiredService<CartControlViewModel>(),
             NavigationSection.Catalog => Ioc.Default.GetRequiredService<ProductsCatalogControlViewModel>(),
+            NavigationSection.UserManagement => Ioc.Default.GetRequiredService<UserManagementControlViewModel>(),
             _ => CurrentViewModel
         };
     }
@@ -147,12 +153,19 @@ public partial class MainWindowViewModel : ViewModelBase
         SelectedNavigationSection = NavigationSection.Cart;
     }
 
+    [RelayCommand]
+    private void SelectUserManagement()
+    {
+        SelectedNavigationSection = NavigationSection.UserManagement;
+    }
+
     private void SyncView()
     {
         var newSelection = CurrentViewModel switch
         {
             ProductsCatalogControlViewModel => NavigationSection.Catalog,
             CartControlViewModel => NavigationSection.Cart,
+            UserManagementControlViewModel => NavigationSection.UserManagement,
             _ => NavigationSection.None
         };
 
@@ -167,6 +180,7 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(IsCatalogActive));
         OnPropertyChanged(nameof(IsCartActive));
+        OnPropertyChanged(nameof(IsUserManagementActive));
     }
 
 }

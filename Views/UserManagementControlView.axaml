@@ -1,0 +1,184 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:Shop.ViewModels"
+             xmlns:converters="clr-namespace:Shop.Converters"
+             xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+             mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+             x:Class="Shop.Views.UserManagementControlView"
+             x:DataType="vm:UserManagementControlViewModel"
+             x:Name="RootControl">
+    
+        <Grid Margin="10" RowDefinitions="Auto,Auto,*,Auto" RowSpacing="8">
+        
+        <!-- Header -->
+        <Border Grid.Row="0" Background="AliceBlue" CornerRadius="12" BorderBrush="Black" BorderThickness="1" Padding="12">
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBlock FontSize="18" FontWeight="SemiBold" Text="Управление пользователями"/>
+                <Button Grid.Column="1" Command="{Binding RefreshCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <materialIcons:MaterialIcon Kind="Refresh"/>
+                        <TextBlock Text="Обновить"/>
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- Filters and Search -->
+        <Border Grid.Row="1" Background="White" CornerRadius="8" BorderBrush="#E0E0E0" BorderThickness="1" Padding="12">
+            <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="12">
+                
+                <!-- Search and Sort Row -->
+                <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="8">
+                    <StackPanel Orientation="Vertical" Spacing="4">
+                        <TextBlock Text="Поиск:" FontSize="12" Foreground="Gray"/>
+                        <TextBox Text="{Binding SearchText}" Watermark="Введите имя, логин или email"/>
+                    </StackPanel>
+                    
+                    <StackPanel Grid.Column="1" Orientation="Vertical" Spacing="4">
+                        <TextBlock Text="Сортировка:" FontSize="12" Foreground="Gray"/>
+                        <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="4">
+                            <ComboBox Width="150"
+                                      ItemsSource="{Binding SortOptions}"
+                                      SelectedItem="{Binding SelectedSortBy}"/>
+                            <Button Grid.Column="1" 
+                                    Command="{Binding ToggleSortOrderCommand}"
+                                    Width="35"
+                                    Height="35"
+                                    ToolTip.Tip="Изменить порядок сортировки">
+                                <materialIcons:MaterialIcon Kind="SortAscending"/>
+                            </Button>
+                        </Grid>
+                    </StackPanel>
+                    
+                    <StackPanel Grid.Column="2" Orientation="Vertical" Spacing="4">
+                        <TextBlock Text="Фильтр по роли:" FontSize="12" Foreground="Gray"/>
+                        <ComboBox Width="120"
+                                  ItemsSource="{Binding Roles}"
+                                  SelectedItem="{Binding SelectedRole}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Name}"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </StackPanel>
+                    
+                    <StackPanel Grid.Column="3" Orientation="Vertical" Spacing="4">
+                        <TextBlock Text="Фильтр по статусу:" FontSize="12" Foreground="Gray"/>
+                        <StackPanel Orientation="Horizontal" Spacing="5">
+                            <Button Content="Все пользователи" Command="{Binding FilterAllUsersCommand}"/>
+                            <Button Content="Только активные" Command="{Binding FilterActiveUsersCommand}"/>
+                            <Button Content="Только уволенные" Command="{Binding FilterDismissedUsersCommand}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Filter Buttons -->
+                <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto" ColumnSpacing="8">
+                    <Button Command="{Binding ApplyFiltersCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <TextBlock Text="Применить фильтры"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Grid.Column="1" Command="{Binding ClearFiltersCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <TextBlock Text="Очистить фильтры"/>
+                        </StackPanel>
+                    </Button>
+                </Grid>
+            </Grid>
+        </Border>
+
+        <!-- Users List -->
+        <Grid Grid.Row="2">
+            <Grid IsVisible="{Binding IsEmpty}">
+                <TextBlock HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           FontSize="16"
+                           Text="Пользователи не найдены"
+                           Opacity="0.6"/>
+            </Grid>
+
+            <ScrollViewer IsVisible="{Binding !IsEmpty}"
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled">
+                <ItemsControl ItemsSource="{Binding Users}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Margin="0,0,0,8" Padding="12" Background="White" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="8">
+                                <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto,Auto,Auto" ColumnSpacing="12">
+                                    <StackPanel Spacing="2">
+                                        <TextBlock FontWeight="SemiBold" FontSize="16" Text="{Binding FullName}"/>
+                                        <TextBlock Opacity="0.7" FontSize="12" Text="{Binding Login}"/>
+                                    </StackPanel>
+                                    
+                                    <TextBlock Grid.Column="1" VerticalAlignment="Center" Text="{Binding Email}"/>
+                                    <TextBlock Grid.Column="2" VerticalAlignment="Center" Text="{Binding PhoneNumber}"/>
+                                    <TextBlock Grid.Column="3" VerticalAlignment="Center" Text="{Binding RoleName}"/>
+                                    
+                                    <Border Grid.Column="4" 
+                                            VerticalAlignment="Center"
+                                            CornerRadius="12" 
+                                            Padding="8,4"
+                                            Background="{Binding IsDismissed, Converter={x:Static converters:BoolToStatusColorConverter.Instance}}">
+                                        <TextBlock Text="{Binding IsDismissed, Converter={x:Static converters:BoolToStatusTextConverter.Instance}}" 
+                                                   FontSize="11" 
+                                                   FontWeight="SemiBold"/>
+                                    </Border>
+                                    
+                                    <ComboBox Grid.Column="5" 
+                                              Width="120"
+                                              ItemsSource="{Binding $parent[UserControl].DataContext.Roles}"
+                                              SelectedItem="{Binding SelectedRole, Mode=TwoWay}">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Name}"/>
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                        <ComboBox.Effect>
+                                            <DropShadowEffect BlurRadius="4" OffsetX="1" OffsetY="1" Opacity="0.2"/>
+                                        </ComboBox.Effect>
+                                    </ComboBox>
+                                    
+                                    <StackPanel Grid.Column="6" Orientation="Horizontal" Spacing="4">
+                                        <Button Command="{Binding $parent[UserControl].DataContext.UpdateUserRoleCommand}"
+                                                CommandParameter="{Binding .}"
+                                                Width="35" Height="35"
+                                                ToolTip.Tip="Сохранить роль">
+                                            <materialIcons:MaterialIcon Kind="Check"/>
+                                        </Button>
+                                        
+                                        <Button IsVisible="{Binding IsDismissed, Converter={x:Static converters:InverseBoolConverter.Instance}}"
+                                                Command="{Binding $parent[UserControl].DataContext.DismissUserCommand}"
+                                                CommandParameter="{Binding Id}"
+                                                Width="35" Height="35"
+                                                ToolTip.Tip="Уволить">
+                                            <materialIcons:MaterialIcon Kind="PersonOff"/>
+                                        </Button>
+                                        
+                                        <Button IsVisible="{Binding IsDismissed}"
+                                                Command="{Binding $parent[UserControl].DataContext.ReinstateUserCommand}"
+                                                CommandParameter="{Binding Id}"
+                                                Width="35" Height="35"
+                                                ToolTip.Tip="Восстановить">
+                                            <materialIcons:MaterialIcon Kind="PersonAdd"/>
+                                        </Button>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Grid>
+
+        <!-- Action Info -->
+        <TextBlock Grid.Row="3" 
+                   Text="{Binding ActionInfo}" 
+                   HorizontalAlignment="Right" 
+                   Foreground="Green"
+                   FontWeight="SemiBold"/>
+    </Grid>
+</UserControl>

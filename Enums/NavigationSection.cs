@@ -4,5 +4,6 @@ public enum NavigationSection
 {
     None,
     Cart,
-    Catalog
+    Catalog,
+    UserManagement
 }
