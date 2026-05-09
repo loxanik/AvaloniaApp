@@ -25,10 +25,20 @@ public class AuthService(ShopContext shopContext, IUserContext userContext) : IA
                                                                 && u.Password == password);
             // Если нашло, то сохраняем данные о клиенте в память программы
             if (isSuccess)
-                _userContext.CurrentUser = await _shopContext.Users
+            {
+                var user = await _shopContext.Users
                     .Include(u => u.PersonalInfos)
                     .Include(u => u.Role)
                     .FirstOrDefaultAsync(u => u.Login == login);
+                
+                // Проверка на уволенного сотрудника
+                if (user.IsDismissed)
+                {
+                    return false; // Уволенный сотрудник не может войти
+                }
+                
+                _userContext.CurrentUser = user;
+            }
             
             return isSuccess;
         }
@@ -89,6 +99,23 @@ public class AuthService(ShopContext shopContext, IUserContext userContext) : IA
         {
             // Логирование ошибки
             AppLogger.LogError(e, $"Register error: {login}");
+            return false;
+        }
+    }
+    
+    // Метод проверки статуса сотрудника
+    public async Task<bool> IsUserDismissedAsync(string login)
+    {
+        try
+        {
+            var user = await _shopContext.Users
+                .FirstOrDefaultAsync(u => u.Login == login);
+            
+            return user?.IsDismissed ?? false;
+        }
+        catch (Exception ex)
+        {
+            AppLogger.LogError(ex, $"Check dismissed status error: {login}");
             return false;
         }
     }

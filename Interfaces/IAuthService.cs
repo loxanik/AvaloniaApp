@@ -14,4 +14,6 @@ public interface IAuthService
         string? patronymic,
         string phoneNumber,
         string email);
+
+    Task<bool> IsUserDismissedAsync(string login);
 }

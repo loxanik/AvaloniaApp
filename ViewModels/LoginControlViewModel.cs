@@ -75,8 +75,22 @@ public partial class LoginControlViewModel(IAuthService authService) : ViewModel
             }
             else
             {
-                var msg = MessageBoxManager.GetMessageBoxStandard("Логин", "Ошибка входа.\nПроверьте данные", icon: Icon.Error);
-                await msg.ShowAsync();
+                // Проверяем, не уволен ли сотрудник
+                var isDismissed = await _authService.IsUserDismissedAsync(Login);
+                
+                if (isDismissed)
+                {
+                    var msg = MessageBoxManager.GetMessageBoxStandard(
+                        "Доступ запрещен", 
+                        "Вы уволены и не можете войти в систему.\nОбратитесь к администратору.", 
+                        icon: Icon.Warning);
+                    await msg.ShowAsync();
+                }
+                else
+                {
+                    var msg = MessageBoxManager.GetMessageBoxStandard("Логин", "Ошибка входа.\nПроверьте данные", icon: Icon.Error);
+                    await msg.ShowAsync();
+                }
             }
         }
         catch (Exception e)
