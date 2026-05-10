@@ -11,9 +11,9 @@ using Shop.Utils;
 
 namespace Shop.Services;
 
-public class UserService(ShopContext shopContext, IUserContext userContext, ILocalizationHelper localizationHelper) : IUserService
+public class UserService(IDbContextFactory<ShopContext> shopContextFactory, IUserContext userContext, ILocalizationHelper localizationHelper) : IUserService
 {
-    private readonly ShopContext _shopContext = shopContext;
+    private readonly IDbContextFactory<ShopContext> _shopContextFactory = shopContextFactory;
     private readonly IUserContext _userContext = userContext;
     private readonly ILocalizationHelper _localizationHelper = localizationHelper;
 
@@ -26,6 +26,7 @@ public class UserService(ShopContext shopContext, IUserContext userContext, ILoc
     {
         try
         {
+            await using var _shopContext = await _shopContextFactory.CreateDbContextAsync();
             var query = _shopContext.Users
                 .AsNoTracking()
                 .Include(u => u.Role)
@@ -87,6 +88,7 @@ public class UserService(ShopContext shopContext, IUserContext userContext, ILoc
     {
         try
         {
+            await using var _shopContext = await _shopContextFactory.CreateDbContextAsync();
             return await _shopContext.Roles
                 .AsNoTracking()
                 .OrderBy(r => r.Name)
@@ -111,6 +113,7 @@ public class UserService(ShopContext shopContext, IUserContext userContext, ILoc
             if (!IsAdmin())
                 return false;
 
+            await using var _shopContext = await _shopContextFactory.CreateDbContextAsync();
             var user = await _shopContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
             if (user == null)
                 return false;
@@ -137,6 +140,7 @@ public class UserService(ShopContext shopContext, IUserContext userContext, ILoc
             if (!IsAdmin())
                 return false;
 
+            await using var _shopContext = await _shopContextFactory.CreateDbContextAsync();
             var user = await _shopContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
             if (user == null)
                 return false;
@@ -159,6 +163,7 @@ public class UserService(ShopContext shopContext, IUserContext userContext, ILoc
             if (!IsAdmin())
                 return false;
 
+            await using var _shopContext = await _shopContextFactory.CreateDbContextAsync();
             var user = await _shopContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
             if (user == null)
                 return false;

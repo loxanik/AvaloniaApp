@@ -121,7 +121,8 @@
                                             </Image>
                                         </Border>
                                         <Grid Row="1"
-                                              RowDefinitions="*,Auto">
+                                              RowDefinitions="*,Auto"
+                                              Margin="5">
                                             <StackPanel >
                                                 <TextBlock Text="{Binding Name}"
                                                            FontWeight="Bold"
