@@ -2,8 +2,11 @@ using System;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Avalonia.Controls;
+using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
@@ -21,6 +24,7 @@ public partial class ProductDetailsControlViewModel : ViewModelBase, IParameteri
 {
     private readonly IProductService _productService;
     private readonly IUserContext _userContext;
+    private readonly IImageService _imageService;
     
     private int _productId;
     private ProductDetailsModel? _originalProduct;
@@ -67,10 +71,11 @@ public partial class ProductDetailsControlViewModel : ViewModelBase, IParameteri
     [ObservableProperty]
     private bool _hasChanges;
     
-    public ProductDetailsControlViewModel(IProductService productService, IUserContext userContext)
+    public ProductDetailsControlViewModel(IProductService productService, IUserContext userContext, IImageService imageService)
     {
         _productService = productService;
         _userContext = userContext;
+        _imageService = imageService;
     }
     
     public async Task InitializeParam(object param)
@@ -619,6 +624,96 @@ public partial class ProductDetailsControlViewModel : ViewModelBase, IParameteri
             AppLogger.LogError(ex, "Error loading all reference data");
         }
     }
+    [RelayCommand]
+    private async Task UploadImageAsync()
+    {
+        if (!IsEditing || CurrentProductDetails == null || _productId == 0)
+        {
+            var msg = MessageBoxManager.GetMessageBoxStandard(
+                "Загрузка изображения",
+                "Для загрузки изображения необходимо войти в режим редактирования товара",
+                ButtonEnum.Ok,
+                Icon.Info);
+            await msg.ShowAsync();
+            return;
+        }
+
+        try
+        {
+            var topLevel = TopLevel.GetTopLevel(Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop 
+                ? desktop.MainWindow 
+                : null);
+            if (topLevel == null)
+            {
+                AppLogger.LogError(new Exception("Cannot get TopLevel for file dialog"));
+                return;
+            }
+
+            var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            {
+                Title = "Выберите изображение товара",
+                AllowMultiple = false,
+                FileTypeFilter = new[]
+                {
+                    new FilePickerFileType("Изображения")
+                    {
+                        Patterns = new[] { "*.jpg", "*.jpeg", "*.png", "*.bmp", "*.gif" },
+                        MimeTypes = new[] { "image/jpeg", "image/png", "image/bmp", "image/gif" }
+                    }
+                }
+            });
+
+            if (files.Count > 0)
+            {
+                var file = files[0];
+                await using var stream = await file.OpenReadAsync();
+                using var memoryStream = new MemoryStream();
+                await stream.CopyToAsync(memoryStream);
+                var imageData = memoryStream.ToArray();
+
+                IsBusy = true;
+                
+                var success = await _imageService.UploadProductImageAsync(_productId, imageData);
+                
+                if (success)
+                {
+                    var updatedImage = _imageService.GetProductImage(_productId, imageData);
+                    CurrentProductDetails.UpdateDisplayImage(updatedImage);
+                    
+                    var successMsg = MessageBoxManager.GetMessageBoxStandard(
+                        "Успех",
+                        "Изображение успешно загружено",
+                        ButtonEnum.Ok,
+                        Icon.Success);
+                    await successMsg.ShowAsync();
+                }
+                else
+                {
+                    var errorMsg = MessageBoxManager.GetMessageBoxStandard(
+                        "Ошибка",
+                        "Не удалось загрузить изображение",
+                        ButtonEnum.Ok,
+                        Icon.Error);
+                    await errorMsg.ShowAsync();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            AppLogger.LogError(ex, "Error uploading image");
+            var errorMsg = MessageBoxManager.GetMessageBoxStandard(
+                "Ошибка",
+                "Произошла ошибка при загрузке изображения",
+                ButtonEnum.Ok,
+                Icon.Error);
+            await errorMsg.ShowAsync();
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
     private ProductDetailsModel CloneProduct(ProductDetailsModel product)
     {
         return new ProductDetailsModel(product.ToDto());

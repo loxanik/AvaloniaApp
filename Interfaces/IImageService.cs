@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using Avalonia.Media.Imaging;
 
 namespace Shop.Interfaces;
@@ -16,4 +17,12 @@ public interface IImageService
     /// Получить изображение-заглушку по умолчанию
     /// </summary>
     Bitmap GetDefaultImage();
+    
+    /// <summary>
+    /// Загрузить изображение для товара в базу данных
+    /// </summary>
+    /// <param name="productId">ID товара</param>
+    /// <param name="imageData">Данные изображения</param>
+    /// <returns>True если успешно</returns>
+    Task<bool> UploadProductImageAsync(int productId, byte[] imageData);
 }

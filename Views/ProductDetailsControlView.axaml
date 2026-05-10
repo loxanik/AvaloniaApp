@@ -39,8 +39,38 @@
                             Margin="15,0,15,10"
                             ClipToBounds="True"
                             Background="White">
-                        <Image Source="{Binding CurrentProductDetails.DisplayImage}"
-                               Stretch="UniformToFill"/>
+                        <Grid>
+                            <Image Source="{Binding CurrentProductDetails.DisplayImage}"
+                                   Stretch="UniformToFill"/>
+                            
+                            <!-- Оверлей для загрузки изображения в режиме редактирования -->
+                            <Border Background="#80000000"
+                                    IsVisible="{Binding IsEditing}"
+                                    Opacity="0.7"
+                                    PointerEntered="ImageBorder_PointerEntered"
+                                    PointerExited="ImageBorder_PointerExited">
+                                <StackPanel HorizontalAlignment="Center"
+                                            VerticalAlignment="Center">
+                                    <materialIcons:MaterialIcon Kind="CloudUpload"
+                                                              Foreground="White"
+                                                              Width="32"
+                                                              Height="32"
+                                                              HorizontalAlignment="Center"/>
+                                    <TextBlock Text="Нажмите для загрузки изображения"
+                                               Foreground="White"
+                                               HorizontalAlignment="Center"
+                                               Margin="0,5,0,0"/>
+                                </StackPanel>
+                            </Border>
+                            
+                            <!-- Кнопка загрузки изображения -->
+                            <Button IsVisible="{Binding IsEditing}"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Command="{Binding UploadImageCommand}"
+                                    HorizontalAlignment="Stretch"
+                                    VerticalAlignment="Stretch"/>
+                        </Grid>
                     </Border>
                     
                     <!-- Информация о товаре в карточке -->

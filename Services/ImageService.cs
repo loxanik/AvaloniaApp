@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
@@ -87,6 +88,57 @@ public class ImageService : IImageService
         }
     }
     
+    public async Task<bool> UploadProductImageAsync(int productId, byte[] imageData)
+    {
+        try
+        {
+            var product = await _shopContext.Products.FindAsync(productId);
+            if (product == null)
+            {
+                AppLogger.LogError(new Exception($"Product with ID {productId} not found"));
+                return false;
+            }
+
+            Image? imageEntity;
+            
+            if (product.ImageId.HasValue)
+            {
+                imageEntity = await _shopContext.Images.FindAsync(product.ImageId.Value);
+                if (imageEntity != null)
+                {
+                    imageEntity.Image1 = imageData;
+                }
+                else
+                {
+                    imageEntity = new Image { Image1 = imageData };
+                    _shopContext.Images.Add(imageEntity);
+                }
+            }
+            else
+            {
+                imageEntity = new Image { Image1 = imageData };
+                _shopContext.Images.Add(imageEntity);
+            }
+
+            await _shopContext.SaveChangesAsync();
+            
+            product.ImageId = imageEntity.Id;
+            await _shopContext.SaveChangesAsync();
+            
+            lock (_cacheLock)
+            {
+                _imageCache.Remove(productId);
+            }
+
+            return true;
+        }
+        catch (Exception e)
+        {
+            AppLogger.LogError(e, $"Error uploading image for product {productId}");
+            return false;
+        }
+    }
+
     private Bitmap LoadDefaultImage()
     {
         try

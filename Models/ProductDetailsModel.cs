@@ -67,6 +67,12 @@ public partial class ProductDetailsModel : ObservableObject
     
     public byte[]? Image => _dto.Image;
     public Bitmap? DisplayImage => _dto.DisplayImage;
+    
+    public void UpdateDisplayImage(Bitmap? image)
+    {
+        _dto.DisplayImage = image;
+        OnPropertyChanged(nameof(DisplayImage));
+    }
 
     public ObservableCollection<ParametersModel> Parameters { get; }
 

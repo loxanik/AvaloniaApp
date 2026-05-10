@@ -147,7 +147,8 @@
                                                         Background="Transparent"
                                                         VerticalAlignment="Center"
                                                         Command="{Binding #RootControl.DataContext.OpenDetailsCommand, FallbackValue={x:Null}}"
-                                                        CommandParameter="{Binding Id}">
+                                                        CommandParameter="{Binding Id}"
+                                                        ToolTip.Tip="Посмотреть подробно">
                                                     <materialIcons:MaterialIcon Kind="InformationOutline" Height="16"/>
                                                 </Button>
                                                 
@@ -163,7 +164,8 @@
                                                        FontSize="12"
                                                        Opacity="0.9"
                                                        IsVisible="{Binding !IsInStock}"
-                                                       Text="Нет в наличии"/>
+                                                       Text="Нет в наличии"
+                                                       HorizontalAlignment="Right"/>
                                         </Grid>
                                     </Grid>
                             </Border>
