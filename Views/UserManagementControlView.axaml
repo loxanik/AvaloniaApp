@@ -54,7 +54,7 @@
                     
                     <StackPanel Grid.Column="2" Orientation="Vertical" Spacing="4">
                         <TextBlock Text="Фильтр по роли:" FontSize="12" Foreground="Gray"/>
-                        <ComboBox Width="120"
+                        <ComboBox Width="160"
                                   ItemsSource="{Binding Roles}"
                                   SelectedItem="{Binding SelectedRole}">
                             <ComboBox.ItemTemplate>
@@ -129,7 +129,7 @@
                                     </Border>
                                     
                                     <ComboBox Grid.Column="5" 
-                                              Width="120"
+                                              Width="160"
                                               ItemsSource="{Binding $parent[UserControl].DataContext.Roles}"
                                               SelectedItem="{Binding SelectedRole, Mode=TwoWay}">
                                         <ComboBox.ItemTemplate>

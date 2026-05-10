@@ -11,7 +11,7 @@
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/avalonia-logo.ico"
         Title="Магазин мебели"
-        MinHeight="600"
+        MinHeight="666"
         MinWidth="1300"
         WindowStartupLocation="CenterScreen">
     
@@ -36,32 +36,12 @@
             Background="LightSkyBlue"
             IsVisible="{Binding IsNavVisible}"
             HorizontalAlignment="Right"
-            x:Name="BorderNav">
+            x:Name="BorderNav"
+            MinWidth="266">
             <Viewbox Stretch="Uniform" 
                      StretchDirection="Both"
                      x:Name="ViewBoxNav">
                 <StackPanel Orientation="Horizontal">
-                    
-                    <!-- Кнопка рекомендаций (без функционала) -->
-                    <Button Margin="10"
-                            Cursor="Hand"
-                            ToolTip.Tip="Рекомендации (скоро)">
-                        <Button.Styles>
-                            <Style Selector="Button">
-                                <Setter Property="Background" Value="Transparent"/>
-                                <Setter Property="BorderThickness" Value="2"/>
-                                <Setter Property="BorderBrush" Value="Transparent"/>
-                                <Setter Property="CornerRadius" Value="8"/>
-                                <Setter Property="Opacity" Value="0.5"/>
-                            </Style>
-                            <Style Selector="Button:pointerover">
-                                <Setter Property="Background" Value="#E3F2FD"/>
-                                <Setter Property="Opacity" Value="0.8"/>
-                            </Style>
-                        </Button.Styles>
-                        
-                        <materialIcons:MaterialIcon Kind="Like"/>
-                    </Button>
                     
                     <!-- Каталог -->
                     <Button Margin="10"
