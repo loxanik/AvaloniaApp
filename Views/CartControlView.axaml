@@ -157,11 +157,25 @@
                               SelectedValueBinding="{Binding Id}"
                               DisplayMemberBinding="{Binding Name}"/>
                 </StackPanel>
-                <TextBlock Grid.Column="5" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center">
-                    <Run Text="Итого: "/>
-                    <Run Text="{Binding Total}"/>
-                    <Run Text=" ₽"/>
-                </TextBlock>
+                <StackPanel Grid.Column="5" Orientation="Vertical" Spacing="4" VerticalAlignment="Center">
+                    <TextBlock FontSize="18" FontWeight="SemiBold">
+                        <Run Text="Итого: "/>
+                        <Run Text="{Binding Total}"/>
+                        <Run Text=" ₽"/>
+                    </TextBlock>
+                    <TextBlock FontSize="14" Foreground="Green" IsVisible="{Binding DiscountPercentage, Converter={x:Static ObjectConverters.NotEqual}, ConverterParameter=0}">
+                        <Run Text="Скидка "/>
+                        <Run Text="{Binding DiscountPercentage}"/>
+                        <Run Text="%: -"/>
+                        <Run Text="{Binding DiscountAmount}"/>
+                        <Run Text=" ₽"/>
+                    </TextBlock>
+                    <TextBlock FontSize="16" FontWeight="Bold" Foreground="DarkGreen" IsVisible="{Binding DiscountPercentage, Converter={x:Static ObjectConverters.NotEqual}, ConverterParameter=0}">
+                        <Run Text="К оплате: "/>
+                        <Run Text="{Binding DiscountedTotal}"/>
+                        <Run Text=" ₽"/>
+                    </TextBlock>
+                </StackPanel>
                 <TextBlock Grid.Row="1"
                            Grid.ColumnSpan="6"
                            Text="{Binding CheckoutInfo}"/>

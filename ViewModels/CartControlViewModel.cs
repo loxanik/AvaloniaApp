@@ -26,6 +26,15 @@ public partial class CartControlViewModel : ViewModelBase
     private decimal _total;
 
     [ObservableProperty]
+    private decimal _discountedTotal;
+
+    [ObservableProperty]
+    private decimal _discountAmount;
+
+    [ObservableProperty]
+    private decimal _discountPercentage;
+
+    [ObservableProperty]
     private bool _isEmpty = true;
 
     [ObservableProperty]
@@ -63,6 +72,9 @@ public partial class CartControlViewModel : ViewModelBase
             var cart = await _cartService.GetMyCartAsync() ?? new CartDTO();
             Items = new ObservableCollection<CartItemDTO>(cart.Items);
             Total = cart.Total;
+            DiscountedTotal = cart.DiscountedTotal;
+            DiscountAmount = cart.DiscountAmount;
+            DiscountPercentage = cart.DiscountPercentage;
             IsEmpty = !Items.Any();
         }
         catch (Exception e)

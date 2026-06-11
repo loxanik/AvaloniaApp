@@ -9,7 +9,7 @@
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="Shop.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
-        Icon="/Assets/avalonia-logo.ico"
+        Icon="/Assets/furnitures.png"
         Title="Магазин мебели"
         MinHeight="666"
         MinWidth="1300"
