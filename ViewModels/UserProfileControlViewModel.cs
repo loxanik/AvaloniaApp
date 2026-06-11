@@ -42,6 +42,7 @@ public partial class UserProfileControlViewModel : ViewModelBase
     private void Logout()
     {
         _userContext.UserLogout();
+        WeakReferenceMessenger.Default.Send(new ClearCartInfoMessage());
         WeakReferenceMessenger.Default.Send(new ChangeViewModelMessage(typeof(LoginControlViewModel)));
     }
 

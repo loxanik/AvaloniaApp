@@ -58,6 +58,7 @@ public partial class CartControlViewModel : ViewModelBase
         _orderService = orderService;
         _userContext = userContext;
         WeakReferenceMessenger.Default.Register<CartChangedMessage>(this, (_, _) => _ = RefreshAsync());
+        WeakReferenceMessenger.Default.Register<ClearCartInfoMessage>(this, (_, _) => CheckoutInfo = string.Empty);
         _userContext.PropertyChanged += UserContextOnPropertyChanged;
         _ = LoadPaymentMethodsAsync();
         _ = LoadEmployeesAsync();
